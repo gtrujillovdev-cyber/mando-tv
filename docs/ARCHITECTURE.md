@@ -2,25 +2,26 @@
 
 ## 1. Visión General del Sistema
 
-`mando-tv` es un middleware de domótica de alto rendimiento y ultra-baja latencia diseñado para controlar pantallas Smart TV heterogéneas (LG webOS y Android TV / Xiaomi MiTV) mediante interfaces táctiles móviles (PWA para iPhone 16) y control por voz conversacional vía **Apple Siri Shortcuts**.
+`mando-tv` es un middleware de domótica de alto rendimiento y ultra-baja latencia diseñado para controlar pantallas Smart TV heterogéneas (LG webOS y Android TV / Xiaomi MiTV) y sistemas de sonido (Barra Sharp ARC) mediante interfaces táctiles móviles (PWA para iPhone 16) y control por voz conversacional vía **Apple Siri Shortcuts**.
 
 ```mermaid
 flowchart TD
     subgraph Clientes ["📱 Clientes de Entrada"]
-        iPhone["iPhone 16 PWA (Safari / Home Screen)<br/>100dvh Zero-Scroll + Taptic Engine"]
-        Siri["Apple Siri / Shortcuts Voice<br/>'Oye Siri, modo noche'"]
+        iPhone["iPhone 16 PWA (Safari / Home Screen)<br/>100dvh Zero-Scroll + D-Pad 204px"]
+        Siri["Apple Siri / Shortcuts Voice<br/>'Oye Siri, modo noche en la LG'"]
     end
 
     subgraph Hub ["⚡ Servidor Mando TV (Mac M4 / Raspberry Pi)"]
         HTTP["ThreadingHTTPServer (Puerto 8899)<br/>Daemon Worker Pool"]
         Router["Router de Rutas (/api/action, /api/siri, /api/voice)"]
         AsyncDispatcher["Despachador Asíncrono de Hilos<br/>(Latencia HTTP < 15ms)"]
-        StateEngine["Gestor de Estado y Presets<br/>(Día, Noche, Cine, Timers 90m)"]
+        StateEngine["Gestor de Estado y Presets<br/>(Día, Noche, Timers 90m, Audio Routing)"]
     end
 
-    subgraph Hardware ["📺 Dispositivos Controlados"]
+    subgraph Hardware ["📺 Dispositivos del Salón"]
         LG["LG 65' Smart TV (webOS)<br/>192.168.1.250 (SSAP WebSocket / WoL)"]
         Xiaomi["Xiaomi MiTV 55' (Android TV)<br/>192.168.1.238 (ADB TCP/IP 5555)"]
+        Soundbar["Barra de Sonido Sharp<br/>(HDMI eARC / ARC + HDMI-CEC SIMPLINK)"]
     end
 
     iPhone -->|HTTP GET /api/action| HTTP
@@ -29,6 +30,7 @@ flowchart TD
     AsyncDispatcher --> StateEngine
     StateEngine -->|JSON-RPC WebSocket| LG
     StateEngine -->|Subshell ADB Intents/Keyevents| Xiaomi
+    LG -.->|HDMI-CEC Audio/Vol Sync| Soundbar
     Router -.->|Respuesta de Voz Inmediata| Siri
     Router -.->|Haptic JSON Inmediato| iPhone
 ```
@@ -53,7 +55,15 @@ Se implementó un patrón de arquitectura desacoplada:
 
 ---
 
-## 3. Resolución del Estado de Energía en Xiaomi TV
+## 3. Gestión y Enrutamiento de Audio: Barra de Sonido Sharp (HDMI ARC)
+
+La barra de sonido Sharp se integra en el salón conectada al puerto **HDMI eARC / ARC** de la LG 65":
+- Mediante la llamada `ssap://audio/changeSoundOutput` en el bus SSAP de webOS, el servidor cambia dinámicamente entre `external_arc` (Barra Sharp) y `tv_speaker` (altavoces internos de la TV).
+- Al operar sobre HDMI ARC, entra en juego el protocolo **HDMI-CEC (SIMPLINK)**: los comandos de volumen y silenciamiento enviados a la televisión se sincronizan automáticamente con el procesador de la barra de sonido sin requerir mandos secundarios ni periféricos adicionales.
+
+---
+
+## 4. Resolución del Estado de Energía en Xiaomi TV
 
 ### El Problema del Apagado Profundo (`keyevent 26`)
 Al enviar `input keyevent 26` (Power Toggle) a Xiaomi MiTV:
@@ -75,10 +85,10 @@ cmd audio set-volume-mute 3 true
 
 ---
 
-## 4. Siri Voice Webhooks: Integración sin HomeKit
+## 5. Siri Voice Webhooks: Integración sin HomeKit
 
 En lugar de requerir complejas pasarelas como Homebridge, Home Assistant o certificados de HomeKit:
 1. La aplicación expone el endpoint `/api/siri`.
 2. Apple Shortcuts (`Atajos de Apple`) utiliza la acción nativa **"Obtener contenido de URL"**.
-3. El servidor devuelve texto plano en español coloquial (*"Modo Noche activado. Retroiluminación al 6% y temporizador de hora y media iniciado"*).
+3. El servidor devuelve texto plano en español coloquial contextualizado al dispositivo diana (*"Modo Noche activado en la televisión LG con retroiluminación al 6% y temporizador de 90 minutos"*).
 4. El atajo encadena la acción **"Leer texto con la voz"**, proporcionando una interacción bidireccional natural e instantánea.

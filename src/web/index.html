@@ -513,7 +513,7 @@
 </div>
 
 <script>
-  let dispositivoActual = 'xiaomi';
+  let dispositivoActual = localStorage.getItem('mando_target') || 'xiaomi'; window.addEventListener('DOMContentLoaded', () => setTimeout(() => setDispositivo(dispositivoActual), 0));
   let plataformaActual = 'smarttube';
   let audioEsSharp = true;
   let timerActualMinutos = 0;
@@ -546,7 +546,7 @@
 
   function setDispositivo(target) {
     vibrar();
-    dispositivoActual = target;
+    dispositivoActual = target; localStorage.setItem('mando_target', target);
     ['xiaomi', 'lg', 'ambas'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (t === target) {

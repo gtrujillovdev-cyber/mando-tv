@@ -219,12 +219,46 @@ class MandoHandler(BaseHTTPRequestHandler):
             threading.Thread(target=_m, daemon=True).start()
             return f"Silenciando {disp_nombre}."
 
-        elif action in ["play", "play_pause"]:
+        elif action in ["play", "play_pause", "pausa"]:
             def _pp():
                 if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "PLAY"}))
                 if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 85")
             threading.Thread(target=_pp, daemon=True).start()
             return "Reproducción alternada."
+
+        elif action in ["retroceder", "rewind"]:
+            def _rw():
+                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "REWIND"}))
+                if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 89")
+            threading.Thread(target=_rw, daemon=True).start()
+            return f"Retrocediendo 10 segundos en {disp_nombre}."
+
+        elif action in ["adelantar", "fastforward"]:
+            def _ff():
+                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "FASTFORWARD"}))
+                if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 90")
+            threading.Thread(target=_ff, daemon=True).start()
+            return f"Avanzando 10 segundos en {disp_nombre}."
+
+        elif action == "vol_up":
+            def _vu():
+                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("vol_up", {}))
+                if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 24")
+            threading.Thread(target=_vu, daemon=True).start()
+            return f"Subiendo volumen de {disp_nombre}."
+
+        elif action == "vol_down":
+            def _vd():
+                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("vol_down", {}))
+                if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 25")
+            threading.Thread(target=_vd, daemon=True).start()
+            return f"Bajando volumen de {disp_nombre}."
+
+        elif action == "audio_tv":
+            def _at():
+                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("audio_output", {"output": "tv_speaker"}))
+            threading.Thread(target=_at, daemon=True).start()
+            return "Audio cambiado a los altavoces de la televisión LG."
 
         elif action in ["ver", "buscar", "poner", "reproducir"]:
             nombres = {"smarttube": "SmartTube", "netflix": "Netflix", "prime": "Prime Video", "disney": "Disney+", "spotify": "Spotify", "youtube": "YouTube"}

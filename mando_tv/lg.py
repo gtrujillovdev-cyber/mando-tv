@@ -3,7 +3,9 @@ import asyncio
 import json
 import os
 import subprocess
+import threading
 import time
+import uuid
 from typing import Dict, Optional
 from .config import Color, IP_LG, LG_CONFIG_PATH, MAC_LG, ROOT_DIR, TIMER_FILE_LG
 from .wol import enviar_wol
@@ -29,206 +31,214 @@ def cargar_config_lg() -> Dict:
     return {"ip": IP_LG, "client_key": ""}
 
 
-async def enviar_comando_lg(accion: str, payload_extra: Optional[Dict] = None) -> bool:
-    try:
+PERMISOS = [
+    "LAUNCH", "LAUNCH_WEBAPP", "APP_TO_APP", "CLOSE", "TEST_OPEN", "TEST_PROTECTED",
+    "CONTROL_AUDIO", "CONTROL_DISPLAY", "CONTROL_INPUT_JOYSTICK", "CONTROL_INPUT_MEDIA_RECORDING",
+    "CONTROL_INPUT_MEDIA_PLAYBACK", "CONTROL_INPUT_TV", "CONTROL_POWER", "CONTROL_TV_SCREEN",
+    "CONTROL_TV_STANBY", "CONTROL_MOUSE_AND_KEYBOARD", "CONTROL_INPUT_TEXT",
+    "READ_APP_STATUS", "READ_CURRENT_CHANNEL", "READ_INPUT_DEVICE_LIST", "READ_NETWORK_STATE",
+    "READ_RUNNING_APPS", "READ_TV_CHANNEL_LIST", "READ_POWER_STATE", "READ_COUNTRY_INFO",
+    "READ_SETTINGS", "READ_INSTALLED_APPS", "WRITE_NOTIFICATION_TOAST", "WRITE_NOTIFICATION_ALERT",
+]
+
+MANIFEST = {
+    "manifestVersion": 1,
+    "appVersion": "1.1",
+    "permissions": PERMISOS,
+    "signed": {
+        "created": "20140509",
+        "appId": "com.lge.test",
+        "vendorId": "com.lge",
+        "localizedAppNames": {"": "LG Remote App"},
+        "localizedVendorNames": {"": "LG Electronics"},
+        "permissions": PERMISOS,
+        "serial": "2f930e2d2cfe083771f68e4fe54be0a1",
+    },
+}
+
+# Teclas que se envían por el socket de puntero (latencia mínima, conexión persistente).
+TECLAS_PUNTERO = {
+    "UP", "DOWN", "LEFT", "RIGHT", "ENTER", "BACK", "EXIT", "MENU", "HOME", "INFO",
+    "CHANNELUP", "CHANNELDOWN", "VOLUMEUP", "VOLUMEDOWN", "MUTE",
+    "RED", "GREEN", "YELLOW", "BLUE",
+}
+
+# Teclas con endpoint SSAP nativo.
+TECLAS_SSAP = {
+    "INPUT": ("ssap://system.launcher/open", {"id": "com.webos.app.inputpicker"}),
+    "PLAY": ("ssap://media.controls/play", None),
+    "PAUSE": ("ssap://media.controls/pause", None),
+    "REWIND": ("ssap://media.controls/rewind", None),
+    "FASTFORWARD": ("ssap://media.controls/fastForward", None),
+}
+
+_loop_bg: Optional[asyncio.AbstractEventLoop] = None
+_loop_lock = threading.Lock()
+
+
+def _loop() -> asyncio.AbstractEventLoop:
+    """Bucle asyncio en segundo plano que mantiene viva la conexión con la LG."""
+    global _loop_bg
+    with _loop_lock:
+        if _loop_bg is None:
+            _loop_bg = asyncio.new_event_loop()
+            threading.Thread(target=_loop_bg.run_forever, name="lg-loop", daemon=True).start()
+    return _loop_bg
+
+
+class _Sesion:
+    """Conexión SSAP persistente + socket de puntero persistente."""
+
+    def __init__(self):
+        self.ws = None
+        self.ptr = None
+        self.lock: Optional[asyncio.Lock] = None
+
+    async def cerrar(self):
+        for c in (self.ptr, self.ws):
+            try:
+                if c is not None:
+                    await c.close()
+            except Exception:
+                pass
+        self.ws = self.ptr = None
+
+    async def conectar(self):
         import websockets
+        cfg = cargar_config_lg()
+        ws = await websockets.connect(f"ws://{cfg.get('ip', IP_LG)}:3000/", ping_interval=None, open_timeout=3.0)
+        await ws.send(json.dumps({"type": "register", "id": "reg", "payload": {
+            "forcePairing": False, "pairingType": "PROMPT",
+            "client-key": cfg.get("client_key"), "manifest": MANIFEST}}))
+        while True:  # esperar 'registered' (ignora 'response' del aviso de emparejamiento)
+            msg = json.loads(await asyncio.wait_for(ws.recv(), 10))
+            if msg.get("type") == "registered":
+                break
+            if msg.get("type") == "error":
+                await ws.close()
+                raise RuntimeError(msg.get("error"))
+        self.ws = ws
+
+    async def req(self, uri: str, payload: Optional[Dict] = None, timeout: float = 5.0) -> Dict:
+        if self.ws is None:
+            await self.conectar()
+        rid = uuid.uuid4().hex[:8]
+        msg = {"type": "request", "id": rid, "uri": uri}
+        if payload:
+            msg["payload"] = payload
+        await self.ws.send(json.dumps(msg))
+        while True:
+            r = json.loads(await asyncio.wait_for(self.ws.recv(), timeout))
+            if r.get("id") == rid:
+                return r
+
+    async def boton(self, nombre: str):
+        import websockets
+        if self.ptr is None:
+            r = await self.req("ssap://com.webos.service.networkinput/getPointerInputSocket")
+            sock = r.get("payload", {}).get("socketPath")
+            if not sock:
+                raise RuntimeError(r.get("error") or "sin socket de puntero")
+            self.ptr = await websockets.connect(sock, ping_interval=None, open_timeout=3.0)
+        await self.ptr.send(f"type:button\nname:{nombre}\n\n")
+
+
+_sesion = _Sesion()
+
+
+async def _con_reintento(fn):
+    """Ejecuta fn(); si la conexión cayó, reconecta y reintenta una vez."""
+    if _sesion.lock is None:
+        _sesion.lock = asyncio.Lock()
+    async with _sesion.lock:
+        try:
+            return await fn()
+        except Exception:
+            await _sesion.cerrar()
+            return await fn()
+
+
+async def _alerta_con_ajuste(mensaje: str, categoria: str, ajustes: Dict):
+    """Aplica ajustes de sistema mediante una alerta con onclose (Luna) y la cierra al instante."""
+    r = await _sesion.req("ssap://system.notifications/createAlert", {
+        "message": mensaje, "modal": False, "buttons": [{"label": "OK", "focus": True}],
+        "onclose": {"uri": "luna://com.webos.settingsservice/setSystemSettings",
+                    "params": {"category": categoria, "settings": ajustes}},
+        "type": "confirm", "isSysReq": True})
+    aid = r.get("payload", {}).get("alertId")
+    if aid:
+        await asyncio.sleep(0.3)
+        await _sesion.req("ssap://system.notifications/closeAlert", {"alertId": aid})
+
+
+async def _ejecutar(accion: str, p: Dict):
+    s = _sesion
+    if accion == "apagar":
+        await s.req("ssap://system/turnOff")
+        print(f"{Color.GREEN}[✓] LG 65\": Apagada correctamente.{Color.END}")
+        return True
+    if accion == "toast":
+        await s.req("ssap://system.notifications/createToast", {"message": p.get("mensaje", "")})
+        return True
+    if accion == "volumen":
+        await s.req("ssap://audio/setVolume", {"volume": p.get("volumen", 15)})
+        return True
+    if accion == "mute":
+        await s.req("ssap://audio/setMute", {"mute": p.get("mute", True)})
+        return True
+    if accion == "vol_up":
+        await s.req("ssap://audio/volumeUp")
+        return True
+    if accion == "vol_down":
+        await s.req("ssap://audio/volumeDown")
+        return True
+    if accion == "ajustes":
+        await _alerta_con_ajuste(p.get("mensaje", "Aplicando configuración..."),
+                                 p.get("category", "picture"), p.get("settings", {}))
+        return True
+    if accion == "solo_audio":
+        await _alerta_con_ajuste("🌙 Pantalla apagada (Solo Audio). Pulsa cualquier tecla para reactivar.",
+                                 "picture", {"energySaving": "screen_off"})
+        return True
+    if accion == "app":
+        r = await s.req("ssap://system.launcher/open", {"id": p.get("id", "youtube.leanback.v4"), "params": p.get("params", {})})
+        return r.get("payload", {}).get("returnValue", True)
+    if accion == "audio_output":
+        r = await s.req("ssap://audio/changeSoundOutput", {"output": p.get("output", "external_arc")})
+        return r.get("payload", {}).get("returnValue", True)
+    if accion == "status":
+        r = await s.req("ssap://com.webos.applicationManager/getForegroundAppInfo")
+        return r.get("payload", {}).get("appId", "Desconocida")
+    if accion == "tecla":
+        tecla = p.get("tecla", "ENTER").upper()
+        if tecla in TECLAS_SSAP:
+            uri, pl = TECLAS_SSAP[tecla]
+            r = await s.req(uri, pl)
+            return r.get("type") != "error"
+        await s.boton(tecla)  # puntero: UP/DOWN/LEFT/RIGHT/ENTER/BACK/HOME/MENU/CH±...
+        return True
+    return False
+
+
+async def enviar_comando_lg(accion: str, payload_extra: Optional[Dict] = None) -> bool:
+    """Envía una acción a la LG reutilizando la conexión persistente (sin re-registro por pulsación)."""
+    try:
+        import websockets  # noqa: F401
     except ImportError:
         print(f"{Color.RED}[!] Librería 'websockets' no disponible.{Color.END}")
         return False
-
-    cfg = cargar_config_lg()
-    ip = cfg.get("ip", IP_LG)
-    key = cfg.get("client_key")
-    uri = f"ws://{ip}:3000/"
-
-    manifest = {
-        "manifestVersion": 1,
-        "appVersion": "1.1",
-        "signed": {
-            "created": "20261104",
-            "appId": "com.antigravity.macm4",
-            "vendorId": "antigravity",
-            "localizedAppNames": {"": "Mac M4 Master Controller"},
-            "permissions": [
-                "LAUNCH", "LAUNCH_WEBAPP", "APP_TO_APP", "CLOSE", "TEST_OPEN",
-                "CONTROL_AUDIO", "CONTROL_DISPLAY", "CONTROL_INPUT_JOYSTICK",
-                "CONTROL_POWER", "READ_APP_STATUS", "READ_CURRENT_CHANNEL",
-                "READ_INPUT_DEVICE_LIST", "READ_NETWORK_STATUS", "READ_RUNNING_APPS",
-                "READ_TV_CHANNEL_LIST", "WRITE_NOTIFICATION_TOAST", "READ_POWER_STATE",
-                "READ_COUNTRY_INFO"
-            ],
-            "serial": "12345678"
-        },
-        "permissions": [
-            "LAUNCH", "LAUNCH_WEBAPP", "APP_TO_APP", "CLOSE", "TEST_OPEN",
-            "CONTROL_AUDIO", "CONTROL_DISPLAY", "CONTROL_INPUT_JOYSTICK",
-            "CONTROL_POWER", "READ_APP_STATUS", "READ_CURRENT_CHANNEL",
-            "READ_INPUT_DEVICE_LIST", "READ_NETWORK_STATUS", "READ_RUNNING_APPS",
-            "READ_TV_CHANNEL_LIST", "WRITE_NOTIFICATION_TOAST", "READ_POWER_STATE",
-            "READ_COUNTRY_INFO"
-        ]
-    }
-
+    p = payload_extra or {}
+    fut = asyncio.run_coroutine_threadsafe(_con_reintento(lambda: _ejecutar(accion, p)), _loop())
     try:
-        async with websockets.connect(uri, ping_interval=None, open_timeout=2.0) as ws:
-            # Autenticación
-            await ws.send(json.dumps({"type": "register", "id": "reg", "payload": {"client-key": key, "manifest": manifest}}))
-            await ws.recv()
-
-            if accion == "apagar":
-                await ws.send(json.dumps({"type": "request", "id": "p_off", "uri": "ssap://system/turnOff"}))
-                print(f"{Color.GREEN}[✓] LG 65\": Apagada correctamente.{Color.END}")
-                return True
-
-            elif accion == "toast":
-                msg = (payload_extra or {}).get("mensaje", "")
-                await ws.send(json.dumps({"type": "request", "id": "t", "uri": "ssap://system.notifications/createToast", "payload": {"message": msg}}))
-                return True
-
-            elif accion == "volumen":
-                vol = (payload_extra or {}).get("volumen", 15)
-                await ws.send(json.dumps({"type": "request", "id": "vol", "uri": "ssap://audio/setVolume", "payload": {"volume": vol}}))
-                print(f"{Color.GREEN}[✓] LG 65\": Volumen fijado a {vol}.{Color.END}")
-                return True
-
-            elif accion == "mute":
-                mute_state = (payload_extra or {}).get("mute", True)
-                await ws.send(json.dumps({"type": "request", "id": "mut", "uri": "ssap://audio/setMute", "payload": {"mute": mute_state}}))
-                estado_str = "Silenciada" if mute_state else "Sonido activado"
-                print(f"{Color.GREEN}[✓] LG 65\": {estado_str}.{Color.END}")
-                return True
-
-            elif accion == "ajustes":
-                # Inyección autorizada con sistema Luna Alert Bridge
-                cat = payload_extra.get("category", "picture")
-                settings = payload_extra.get("settings", {})
-                alert_payload = {
-                    "message": payload_extra.get("mensaje", "Aplicando configuración..."),
-                    "modal": False,
-                    "buttons": [{"label": "OK", "focus": True}],
-                    "onclose": {
-                        "uri": "luna://com.webos.settingsservice/setSystemSettings",
-                        "params": {"category": cat, "settings": settings}
-                    },
-                    "type": "confirm",
-                    "isSysReq": True
-                }
-                await ws.send(json.dumps({"type": "request", "id": "al_req", "uri": "ssap://system.notifications/createAlert", "payload": alert_payload}))
-                res = json.loads(await ws.recv())
-                aid = res.get("payload", {}).get("alertId")
-                if aid:
-                    await asyncio.sleep(0.6)
-                    await ws.send(json.dumps({"type": "request", "id": "cl_req", "uri": "ssap://system.notifications/closeAlert", "payload": {"alertId": aid}}))
-                    await ws.recv()
-                return True
-
-            elif accion == "solo_audio":
-                # Apagar panel LED manteniendo sonido (óptico/altavoces)
-                alert_payload = {
-                    "message": "🌙 Apagando pantalla (Modo Solo Audio). Pulsa cualquier tecla para reactivar el panel.",
-                    "modal": False,
-                    "buttons": [{"label": "OK", "focus": True}],
-                    "onclose": {
-                        "uri": "luna://com.webos.settingsservice/setSystemSettings",
-                        "params": {"category": "picture", "settings": {"energySaving": "screen_off"}}
-                    },
-                    "type": "confirm",
-                    "isSysReq": True
-                }
-                await ws.send(json.dumps({"type": "request", "id": "scr_off", "uri": "ssap://system.notifications/createAlert", "payload": alert_payload}))
-                res = json.loads(await ws.recv())
-                aid = res.get("payload", {}).get("alertId")
-                if aid:
-                    await asyncio.sleep(0.6)
-                    await ws.send(json.dumps({"type": "request", "id": "cl_scr", "uri": "ssap://system.notifications/closeAlert", "payload": {"alertId": aid}}))
-                    await ws.recv()
-                print(f"{Color.GREEN}[✓] LG 65\": Pantalla apagada (Modo Solo Audio activo). Pulsa cualquier tecla del mando para reactivar el vídeo.{Color.END}")
-                return True
-
-            elif accion == "app":
-                app_id = payload_extra.get("id", "youtube.leanback.v4")
-                params = payload_extra.get("params", {})
-                await ws.send(json.dumps({
-                    "type": "request",
-                    "id": "open_app",
-                    "uri": "ssap://system.launcher/open",
-                    "payload": {"id": app_id, "params": params}
-                }))
-                res = json.loads(await ws.recv())
-                return res.get("payload", {}).get("returnValue", True)
-
-            elif accion == "audio_output":
-                output = (payload_extra or {}).get("output", "external_arc")
-                await ws.send(json.dumps({
-                    "type": "request",
-                    "id": "snd_out",
-                    "uri": "ssap://audio/changeSoundOutput",
-                    "payload": {"output": output}
-                }))
-                res = json.loads(await ws.recv())
-                return res.get("payload", {}).get("returnValue", True)
-
-            elif accion == "vol_up":
-                await ws.send(json.dumps({"type": "request", "id": "vup", "uri": "ssap://audio/volumeUp"}))
-                return True
-
-            elif accion == "vol_down":
-                await ws.send(json.dumps({"type": "request", "id": "vdn", "uri": "ssap://audio/volumeDown"}))
-                return True
-
-            elif accion == "tecla":
-                tecla = (payload_extra or {}).get("tecla", "ENTER").upper()
-                # 1) Endpoints SSAP nativos (no requieren socket de puntero)
-                nativos = {
-                    "HOME": ("ssap://system.launcher/open", {"id": "com.webos.app.home"}),
-                    "MENU": ("ssap://system.launcher/open", {"id": "com.palm.app.settings"}),
-                    "INPUT": ("ssap://system.launcher/open", {"id": "com.webos.app.inputpicker"}),
-                    "PLAY": ("ssap://media.controls/play", None),
-                    "PAUSE": ("ssap://media.controls/pause", None),
-                    "REWIND": ("ssap://media.controls/rewind", None),
-                    "FASTFORWARD": ("ssap://media.controls/fastForward", None),
-                    "CHANNELUP": ("ssap://tv/channelUp", None),
-                    "CHANNELDOWN": ("ssap://tv/channelDown", None),
-                }
-                if tecla in nativos:
-                    uri_n, pl = nativos[tecla]
-                    msg = {"type": "request", "id": "k_nat", "uri": uri_n}
-                    if pl:
-                        msg["payload"] = pl
-                    await ws.send(json.dumps(msg))
-                    res = json.loads(await ws.recv())
-                    if res.get("type") != "error":
-                        return True
-                    if tecla == "PLAY":  # algunas apps solo aceptan pause
-                        await ws.send(json.dumps({"type": "request", "id": "k_p", "uri": "ssap://media.controls/pause"}))
-                        await ws.recv()
-                        return True
-                # 2) Socket de puntero (flechas, OK, atrás)
-                await ws.send(json.dumps({"type": "request", "id": "k_ptr", "uri": "ssap://com.webos.service.networkinput/getPointerInputSocket"}))
-                res = json.loads(await ws.recv())
-                sock = res.get("payload", {}).get("socketPath")
-                if sock:
-                    async with websockets.connect(sock, ping_interval=None, open_timeout=2.0) as pws:
-                        await pws.send(f"type:button\nname:{tecla}\n\n")
-                        await asyncio.sleep(0.05)
-                    return True
-                # 3) Fallbacks sin socket
-                if tecla == "ENTER":
-                    await ws.send(json.dumps({"type": "request", "id": "k_ent", "uri": "ssap://com.webos.service.ime/sendEnterKey"}))
-                    await ws.recv()
-                    return True
-                print(f"{Color.YELLOW}[!] LG: tecla {tecla} requiere permiso de puntero: {res.get('error')}{Color.END}")
-                return False
-
-            elif accion == "status":
-                await ws.send(json.dumps({"type": "request", "id": "app", "uri": "ssap://com.webos.applicationManager/getForegroundAppInfo"}))
-                res = json.loads(await ws.recv())
-                app_id = res.get("payload", {}).get("appId", "Desconocida")
-                return app_id
-
+        return await asyncio.wrap_future(fut)
     except Exception as e:
-        print(f"{Color.YELLOW}[!] LG 65\" ({ip}): No responde (en reposo o apagada): {e}{Color.END}")
+        print(f"{Color.YELLOW}[!] LG 65\" ({IP_LG}): {accion} falló: {e}{Color.END}")
         return False
+
+
+def precalentar():
+    """Abre la conexión con la LG al arrancar el servidor para que la primera pulsación sea instantánea."""
+    asyncio.run_coroutine_threadsafe(_con_reintento(lambda: _ejecutar("status", {})), _loop())
 
 
 def programar_temporizador_lg(minutos: float = 90.0):

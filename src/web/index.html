@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#07090e">
+  <meta name="theme-color" content="#0d1117">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Mando Universal TV</title>
+  <title>Mando Universal TV - Vintage Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * {
@@ -18,7 +18,7 @@
       --sab: env(safe-area-inset-bottom, 0px);
     }
     html, body {
-      background-color: #07090e !important;
+      background-color: #0b0e14 !important;
       color: #e2e8f0;
       width: 100%;
       height: 100%;
@@ -31,10 +31,11 @@
       touch-action: manipulation;
       user-select: none;
       -webkit-user-select: none;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     }
 
-    .remote-container {
+    /* CHASIS RETRO DE ALTA FIDELIDAD */
+    .retro-chassis {
       width: 100%;
       height: 100%;
       height: 100dvh;
@@ -45,141 +46,200 @@
       padding-bottom: max(var(--sab), 8px);
       padding-left: 10px;
       padding-right: 10px;
-      background: radial-gradient(circle at 50% 15%, #131a2c 0%, #07090e 75%);
+      background: linear-gradient(180deg, #161c28 0%, #0d111a 40%, #07090f 100%);
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9);
     }
 
-    .glass-card {
-      background: rgba(18, 24, 38, 0.78);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    /* PANTALLA LCD RETRO DE FÓSFORO */
+    .retro-lcd {
+      background: #041009;
+      border: 1.5px solid #163820;
+      border-radius: 10px;
+      box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.95), 0 1px 0 rgba(255, 255, 255, 0.08);
+      font-family: ui-monospace, "SF Mono", "Courier New", monospace;
+      color: #34d399;
+      text-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
     }
 
-    .btn-key {
-      background: linear-gradient(180deg, #242d42 0%, #151a27 100%);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 
-        0 2px 5px rgba(0, 0, 0, 0.5),
-        inset 0 1px 1px rgba(255, 255, 255, 0.15),
-        inset 0 -1px 2px rgba(0, 0, 0, 0.6);
+    /* BOTONES TÁCTILES ESTILO TECLADO RETRO BRAUN / SONY */
+    .btn-retro {
+      background: linear-gradient(180deg, #283042 0%, #1a202d 65%, #131722 100%);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      border-right: 1px solid rgba(0, 0, 0, 0.6);
+      border-bottom: 2px solid #090c12;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
       transition: all 0.04s ease;
       touch-action: manipulation;
     }
-    .btn-key:active {
-      transform: scale(0.93);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.9);
-      filter: brightness(1.35);
+    .btn-retro:active {
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.8);
+      filter: brightness(1.25);
     }
 
+    /* BOTÓN ENCENDIDO (VERDE VINTAGE) */
     .btn-power-on {
-      background: linear-gradient(180deg, #10b981 0%, #047857 70%, #064e3b 100%);
-      border: 1px solid rgba(52, 211, 153, 0.7);
-      box-shadow: 0 0 14px rgba(16, 185, 129, 0.6), inset 0 1px 1px #a7f3d0;
+      background: linear-gradient(180deg, #10b981 0%, #059669 65%, #047857 100%);
+      border-top: 1px solid rgba(255, 255, 255, 0.4);
+      border-bottom: 2px solid #064e3b;
+      box-shadow: 0 3px 8px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
-    .btn-power-on:active { transform: scale(0.92); filter: brightness(1.4); }
+    .btn-power-on:active { transform: translateY(2px); filter: brightness(1.3); }
 
+    /* BOTÓN APAGADO (ROJO VINTAGE) */
     .btn-power-off {
-      background: linear-gradient(180deg, #ef4444 0%, #b91c1c 70%, #7f1d1d 100%);
-      border: 1px solid rgba(248, 113, 113, 0.7);
-      box-shadow: 0 0 14px rgba(239, 68, 68, 0.6), inset 0 1px 1px #fecaca;
+      background: linear-gradient(180deg, #f43f5e 0%, #e11d48 65%, #be123c 100%);
+      border-top: 1px solid rgba(255, 255, 255, 0.4);
+      border-bottom: 2px solid #881337;
+      box-shadow: 0 3px 8px rgba(225, 29, 72, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
-    .btn-power-off:active { transform: scale(0.92); filter: brightness(1.4); }
+    .btn-power-off:active { transform: translateY(2px); filter: brightness(1.3); }
 
-    /* D-PAD ERGONÓMICO CON TAMAÑO DEFINIDO */
-    .dpad-container {
+    /* CONMUTADOR SELECTOR DE TV (CONCENTRIC TOGGLE) */
+    .retro-selector-bar {
+      background: #090c13;
+      border: 1px solid #1e2637;
+      border-radius: 12px;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.8);
+    }
+    .retro-tab {
+      color: #94a3b8;
+      transition: all 0.15s ease;
+    }
+    .retro-tab.active {
+      background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+      color: #ffffff;
+      font-weight: 800;
+      border-radius: 9px;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    /* SLIDERS TIPO MESA DE MEZCLAS RETRO */
+    input[type=range] {
+      -webkit-appearance: none;
+      height: 5px;
+      border-radius: 2px;
+      background: #090d15;
+      border: 1px solid #1a2232;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #64748b 0%, #334155 100%);
+      border-top: 1px solid #94a3b8;
+      border-bottom: 2px solid #0f172a;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.8);
+      cursor: pointer;
+    }
+    .slider-vol::-webkit-slider-thumb {
+      background: linear-gradient(180deg, #a855f7 0%, #7e22ce 100%);
+      border-top: 1px solid #d8b4fe;
+      box-shadow: 0 2px 6px rgba(168, 85, 247, 0.6);
+    }
+
+    /* CRUCETA D-PAD RETRO SONY / HI-FI */
+    .retro-dpad-bezel {
       position: relative;
       width: 204px;
       height: 204px;
       border-radius: 9999px;
-      background: radial-gradient(circle at 50% 50%, #161e31 0%, #101625 60%, #090d16 100%);
+      background: radial-gradient(circle at 50% 50%, #1c2333 0%, #121724 60%, #0a0d15 100%);
+      border: 2px solid #232d42;
       box-shadow: 
-        0 10px 28px rgba(0, 0, 0, 0.85),
+        0 10px 24px rgba(0, 0, 0, 0.9),
         inset 0 2px 3px rgba(255, 255, 255, 0.12),
-        inset 0 -3px 6px rgba(0, 0, 0, 0.85),
-        0 0 0 1px rgba(255, 255, 255, 0.08);
+        inset 0 -3px 8px rgba(0, 0, 0, 0.9);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
-    .dpad-arrow {
+    .dpad-key {
       position: absolute;
-      background: linear-gradient(180deg, #242e44 0%, #141a27 100%);
+      background: linear-gradient(180deg, #2a3348 0%, #181d29 100%);
       border: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #f1f5f9;
-      font-size: 18px;
+      color: #cbd5e1;
+      font-size: 17px;
       font-weight: 900;
-      transition: all 0.05s ease;
+      transition: all 0.04s ease;
       touch-action: manipulation;
     }
-    .dpad-arrow:active {
-      background: rgba(59, 130, 246, 0.4);
+    .dpad-key:active {
+      background: #1d4ed8;
+      color: #ffffff;
       border-color: #3b82f6;
-      color: #93c5fd;
       transform: scale(0.93);
     }
-    .dpad-up {
+    .dpad-k-up {
       top: 6px;
       width: 78px;
       height: 54px;
-      border-radius: 26px 26px 10px 10px;
+      border-radius: 26px 26px 8px 8px;
     }
-    .dpad-down {
+    .dpad-k-down {
       bottom: 6px;
       width: 78px;
       height: 54px;
-      border-radius: 10px 10px 26px 26px;
+      border-radius: 8px 8px 26px 26px;
     }
-    .dpad-left {
+    .dpad-k-left {
       left: 6px;
       width: 54px;
       height: 78px;
-      border-radius: 26px 10px 10px 26px;
+      border-radius: 26px 8px 8px 26px;
     }
-    .dpad-right {
+    .dpad-k-right {
       right: 6px;
       width: 54px;
       height: 78px;
-      border-radius: 10px 26px 26px 10px;
+      border-radius: 8px 26px 26px 8px;
     }
-    .dpad-center {
+    .dpad-k-center {
       z-index: 10;
       width: 72px;
       height: 72px;
       border-radius: 9999px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 900;
       color: #ffffff;
-      background: radial-gradient(circle at 35% 35%, #3b82f6 0%, #1d4ed8 70%, #1e40af 100%);
+      background: radial-gradient(circle at 35% 35%, #3b82f6 0%, #1d4ed8 70%, #172554 100%);
       box-shadow: 
-        0 4px 14px rgba(29, 78, 216, 0.65),
-        inset 0 2px 2px rgba(255, 255, 255, 0.45),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.6);
+        0 4px 12px rgba(29, 78, 216, 0.7),
+        inset 0 2px 2px rgba(255, 255, 255, 0.4),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.8);
       border: 1px solid rgba(255, 255, 255, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .dpad-center:active {
+    .dpad-k-center:active {
       transform: scale(0.92);
-      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9);
-      background: #1d4ed8;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.95);
+      background: #1e40af;
     }
 
-    /* ROCKERS CLÁSICOS DE VOLUMEN Y CANAL */
-    .rocker-box {
+    /* MÓDULOS VERTICALES ROCKER (VOLUMEN Y CANALES) */
+    .retro-rocker-mod {
       width: 66px;
       height: 204px;
+      background: #0e121a;
+      border: 1px solid #1e2637;
       border-radius: 24px;
       padding: 6px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       align-items: center;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.5);
       flex-shrink: 0;
     }
     .rocker-btn {
@@ -190,59 +250,34 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 900;
       color: #f1f5f9;
-      transition: all 0.05s ease;
+      transition: all 0.04s ease;
     }
-    .rocker-mid-btn {
+    .rocker-sep-btn {
       width: 100%;
-      height: 38px;
+      height: 36px;
       margin: 4px 0;
-      border-radius: 12px;
+      border-radius: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
-      font-weight: 800;
+      font-size: 10px;
+      font-weight: 900;
     }
 
-    .active-pill {
+    /* PILLS DE STREAMING */
+    .plat-tab {
+      background: #111622;
+      border: 1px solid #1f2738;
+      color: #94a3b8;
+    }
+    .plat-tab.active-p {
       background: #3b82f6 !important;
       color: #ffffff !important;
-      box-shadow: 0 0 12px rgba(59, 130, 246, 0.7);
-    }
-    .plat-pill {
-      background: rgba(18, 24, 38, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .active-plat {
-      background: #3b82f6 !important;
-      color: #ffffff !important;
-      box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    }
-
-    /* Sliders personalizados táctiles */
-    input[type=range] {
-      -webkit-appearance: none;
-      height: 6px;
-      border-radius: 3px;
-      background: #1e293b;
-      outline: none;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #38bdf8;
-      box-shadow: 0 0 8px #0284c7;
-      cursor: pointer;
-    }
-    .slider-vol::-webkit-slider-thumb {
-      background: #c084fc;
-      box-shadow: 0 0 8px #9333ea;
+      border-color: #60a5fa !important;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
     }
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -251,69 +286,77 @@
 </head>
 <body>
 
-<div class="remote-container">
+<div class="retro-chassis">
 
-  <!-- 1. HEADER: POWER ON / SELECTOR TV / POWER OFF -->
+  <!-- 1. PANTALLA LCD RETRO DE ESTADO SUPERIOR (7-SEGMENT PHOSPHOR GLOW) -->
+  <div class="retro-lcd px-2.5 py-1 flex items-center justify-between text-[10px] tracking-wider flex-shrink-0">
+    <div class="flex items-center gap-2">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span id="lcdTarget" class="font-bold text-emerald-300">TV: XIAOMI</span>
+      <span class="text-emerald-700">|</span>
+      <span id="lcdAudio" class="text-emerald-400">ARC: SHARP</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- Indicador digital de sueño (sin solapamientos ni desbordes) -->
+      <span id="lcdTimer" onclick="confirmarCancelarTimer()" class="font-bold cursor-pointer text-emerald-300">⏱ SLEEP: OFF</span>
+    </div>
+  </div>
+
+  <!-- 2. CABECERA: PWR ON | SELECTOR MULTI-TV TIPO TOGGLE | PWR OFF -->
   <div class="flex items-center justify-between gap-1.5 flex-shrink-0">
-    <!-- Botón Power ON (Verde Clásico) -->
-    <button onclick="solicitarEncendido()" title="Encender TV" class="btn-power-on px-3.5 h-9 rounded-xl text-white flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-transform shadow-lg">
-      <span class="text-sm">⚡</span> <span>ON</span>
+    <button onclick="solicitarEncendido()" title="Encender TV" class="btn-power-on px-3.5 h-9 rounded-xl text-white flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-transform shadow">
+      <span>⚡</span> <span>ON</span>
     </button>
 
-    <!-- Selector de Dispositivo Activo (Xiaomi, LG, Ambas) -->
-    <div class="flex-1 flex bg-[#0e1320] p-1 rounded-xl border border-white/10 gap-1 shadow-inner">
-      <button onclick="setDispositivo('xiaomi')" id="tab-xiaomi" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all active-pill">
+    <div class="flex-1 flex retro-selector-bar p-1 gap-1">
+      <button onclick="setDispositivo('xiaomi')" id="tab-xiaomi" class="retro-tab active flex-1 py-1.5 text-[11px] font-bold">
         Xiaomi
       </button>
-      <button onclick="setDispositivo('lg')" id="tab-lg" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg text-slate-400 hover:text-white transition-all">
+      <button onclick="setDispositivo('lg')" id="tab-lg" class="retro-tab flex-1 py-1.5 text-[11px] font-bold">
         LG 65"
       </button>
-      <button onclick="setDispositivo('ambas')" id="tab-ambas" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg text-slate-400 hover:text-white transition-all">
+      <button onclick="setDispositivo('ambas')" id="tab-ambas" class="retro-tab flex-1 py-1.5 text-[11px] font-bold">
         Ambas
       </button>
     </div>
 
-    <!-- Botón Power OFF (Rojo Clásico) -->
-    <button onclick="solicitarApagado()" title="Apagar TV" class="btn-power-off px-3.5 h-9 rounded-xl text-white flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-transform shadow-lg">
-      <span class="text-sm">⏻</span> <span>OFF</span>
+    <button onclick="solicitarApagado()" title="Apagar TV" class="btn-power-off px-3.5 h-9 rounded-xl text-white flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-transform shadow">
+      <span>⏻</span> <span>OFF</span>
     </button>
   </div>
 
-  <!-- 2. SELECTOR MULTIPLATAFORMA STREAMING & BUSCADOR CON DICTADO iOS -->
+  <!-- 3. SELECTOR DE FUENTES STREAMING & BARRA DE COMANDO -->
   <div class="w-full flex-shrink-0 space-y-1">
-    <!-- Selector de Plataforma (Pills horizontales) -->
     <div class="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar">
-      <button type="button" onclick="setPlataforma('smarttube')" id="plat-smarttube" class="active-plat px-2.5 py-1 rounded-xl text-[10px] font-extrabold flex items-center gap-1 whitespace-nowrap transition-all shadow">
+      <button type="button" onclick="setPlataforma('smarttube')" id="plat-smarttube" class="plat-tab active-p px-2.5 py-1 rounded-lg text-[9.5px] font-bold whitespace-nowrap flex items-center gap-1">
         📺 SmartTube
       </button>
-      <button type="button" onclick="setPlataforma('netflix')" id="plat-netflix" class="plat-pill px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 whitespace-nowrap text-rose-300 transition-all">
+      <button type="button" onclick="setPlataforma('netflix')" id="plat-netflix" class="plat-tab px-2.5 py-1 rounded-lg text-[9.5px] font-bold whitespace-nowrap flex items-center gap-1 text-rose-300">
         🍿 Netflix
       </button>
-      <button type="button" onclick="setPlataforma('prime')" id="plat-prime" class="plat-pill px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 whitespace-nowrap text-sky-300 transition-all">
+      <button type="button" onclick="setPlataforma('prime')" id="plat-prime" class="plat-tab px-2.5 py-1 rounded-lg text-[9.5px] font-bold whitespace-nowrap flex items-center gap-1 text-sky-300">
         📦 Prime
       </button>
-      <button type="button" onclick="setPlataforma('disney')" id="plat-disney" class="plat-pill px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 whitespace-nowrap text-indigo-300 transition-all">
+      <button type="button" onclick="setPlataforma('disney')" id="plat-disney" class="plat-tab px-2.5 py-1 rounded-lg text-[9.5px] font-bold whitespace-nowrap flex items-center gap-1 text-indigo-300">
         ✨ Disney+
       </button>
-      <button type="button" onclick="setPlataforma('spotify')" id="plat-spotify" class="plat-pill px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 whitespace-nowrap text-emerald-300 transition-all">
+      <button type="button" onclick="setPlataforma('spotify')" id="plat-spotify" class="plat-tab px-2.5 py-1 rounded-lg text-[9.5px] font-bold whitespace-nowrap flex items-center gap-1 text-emerald-300">
         🎵 Spotify
       </button>
-      <button type="button" onclick="setPlataforma('youtube')" id="plat-youtube" class="plat-pill px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 whitespace-nowrap text-red-300 transition-all">
+      <button type="button" onclick="setPlataforma('youtube')" id="plat-youtube" class="plat-tab px-2.5 py-1 rounded-lg text-[9.5px] font-bold whitespace-nowrap flex items-center gap-1 text-red-300">
         ▶️ YouTube
       </button>
     </div>
 
-    <!-- Barra de Búsqueda y Dictado por Voz -->
     <form onsubmit="buscarYReproducir(event)" class="relative flex items-center">
       <input 
         id="inputBusqueda" 
         type="search" 
         enterkeyhint="search" 
         autocomplete="off"
-        autocorrect="off"
         spellcheck="false"
         placeholder="🔍 Buscar o dictar en SmartTube..." 
-        class="w-full bg-[#121727]/90 border border-slate-700/70 focus:border-blue-500 text-slate-100 placeholder-slate-400 text-xs rounded-xl pl-3 pr-12 py-1.5 shadow-inner focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+        class="w-full bg-[#0a0e16] border border-slate-700/60 focus:border-blue-500 text-slate-100 placeholder-slate-500 text-xs rounded-xl pl-3 pr-12 py-1.5 shadow-inner focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
       />
       <button type="submit" class="absolute right-1 px-3 py-1 bg-blue-600 active:bg-blue-700 text-white rounded-lg text-xs font-bold shadow">
         Ir
@@ -321,152 +364,149 @@
     </form>
   </div>
 
-  <!-- 3. SLIDERS DUALES: RETROILUMINACIÓN & VOLUMEN -->
-  <div class="glass-card px-3 py-1.5 rounded-xl space-y-1 flex-shrink-0">
+  <!-- 4. CONTROLES ANALÓGICOS RETRO: BRIGHTNESS & VOLUME FADERS -->
+  <div class="bg-[#0b0f17] border border-slate-800 p-2.5 rounded-xl space-y-1.5 flex-shrink-0 shadow-inner">
     <div>
-      <div class="flex justify-between items-center text-[9px] font-bold tracking-wider mb-0.5">
-        <span class="text-sky-400 flex items-center gap-1">☀️ RETROILUMINACIÓN</span>
-        <span id="brilloVal" class="font-mono text-sky-300 bg-sky-950/70 px-1.5 py-0.2 rounded border border-sky-800/50 text-[9px]">6%</span>
+      <div class="flex justify-between items-center text-[9px] font-mono tracking-widest text-slate-400 mb-0.5">
+        <span>☀️ RETROILUMINACIÓN</span>
+        <span id="brilloVal" class="text-sky-400 font-bold">6%</span>
       </div>
       <input id="sliderBrillo" type="range" min="0" max="100" value="6" oninput="actualizarLabelBrillo(this.value)" onchange="enviarBrillo(this.value)" class="w-full">
     </div>
     <div>
-      <div class="flex justify-between items-center text-[9px] font-bold tracking-wider mb-0.5">
-        <span class="text-purple-400 flex items-center gap-1">🔊 VOLUMEN</span>
-        <span id="volVal" class="font-mono text-purple-300 bg-purple-950/70 px-1.5 py-0.2 rounded border border-purple-800/50 text-[9px]">15%</span>
+      <div class="flex justify-between items-center text-[9px] font-mono tracking-widest text-slate-400 mb-0.5">
+        <span>🔊 VOLUMEN MAESTRO</span>
+        <span id="volVal" class="text-purple-400 font-bold">15%</span>
       </div>
       <input id="sliderVol" type="range" min="0" max="100" value="15" oninput="actualizarLabelVol(this.value)" onchange="enviarVolumen(this.value)" class="w-full slider-vol">
     </div>
   </div>
 
-  <!-- 4. MODOS CIRCADIANOS: DÍA Y NOCHE JUNTOS (ORDEN ESCRUPULOSO) -->
+  <!-- 5. PRESETS CIRCADIANOS: DÍA Y NOCHE LIMPIOS (SIN OVERFLOWS NI BADGES SOLAPADOS) -->
   <div class="grid grid-cols-4 gap-1.5 flex-shrink-0">
-    <!-- Noche con Cuenta Atrás Digital en Vivo -->
-    <button onclick="enviarAccion('noche')" class="btn-key py-2 px-2.5 rounded-xl bg-gradient-to-r from-indigo-950 via-purple-950 to-slate-900 border border-indigo-400/50 flex items-center justify-between text-left shadow">
-      <div class="flex items-center gap-1.5">
-        <span class="text-sm">🌙</span>
-        <div>
-          <div class="text-[11px] font-black text-white leading-tight">Noche</div>
-          <div class="text-[8px] text-indigo-300">6% + 90m</div>
-        </div>
-      </div>
-      <span id="timerBadge" onclick="event.stopPropagation(); confirmarCancelarTimer();" class="text-[9px] bg-indigo-500/30 text-indigo-200 px-1.5 py-0.5 rounded-full font-mono font-bold tracking-tight">90m</span>
+    <!-- Noche (Brillo 6% + Timer 90m de fábrica) -->
+    <button onclick="enviarAccion('noche')" id="btnNoche" title="Modo Noche (6% Brillo + 90 min de autoapagado)" class="btn-retro py-2 px-1 rounded-xl text-center border-l-2 border-indigo-400">
+      <div class="text-xs">🌙</div>
+      <div class="text-[10px] font-black text-white leading-tight">Noche</div>
+      <div class="text-[8px] font-mono text-indigo-300">6% • 90m</div>
     </button>
 
-    <!-- Día (100% Brillo) - JUNTOS DIRECTAMENTE -->
-    <button onclick="enviarAccion('dia')" title="Modo Día 100%" class="btn-key py-2 rounded-xl text-center border border-amber-500/50 bg-gradient-to-b from-amber-950/40 to-slate-900 shadow">
-      <div class="text-sm">☀️</div>
-      <div class="text-[9.5px] font-bold text-amber-200">Día</div>
+    <!-- Día (100% Brillo) -->
+    <button onclick="enviarAccion('dia')" title="Modo Día (100% Brillo)" class="btn-retro py-2 px-1 rounded-xl text-center border-l-2 border-amber-400">
+      <div class="text-xs">☀️</div>
+      <div class="text-[10px] font-black text-white leading-tight">Día</div>
+      <div class="text-[8px] font-mono text-amber-300">100%</div>
     </button>
 
-    <!-- Cine -->
-    <button onclick="enviarAccion('cine')" title="Modo Cine" class="btn-key py-2 rounded-xl text-center border border-slate-700/60 shadow">
-      <div class="text-sm">🎬</div>
-      <div class="text-[9.5px] font-bold text-slate-200">Cine</div>
+    <!-- Cine (Filmmaker 30%) -->
+    <button onclick="enviarAccion('cine')" title="Modo Cine" class="btn-retro py-2 px-1 rounded-xl text-center border-l-2 border-slate-500">
+      <div class="text-xs">🎬</div>
+      <div class="text-[10px] font-black text-white leading-tight">Cine</div>
+      <div class="text-[8px] font-mono text-slate-400">30%</div>
     </button>
 
-    <!-- Juego -->
-    <button onclick="enviarAccion('juego')" title="Modo Juego" class="btn-key py-2 rounded-xl text-center border border-slate-700/60 shadow">
-      <div class="text-sm">🎮</div>
-      <div class="text-[9.5px] font-bold text-slate-200">Juego</div>
+    <!-- Juego (Low Latency) -->
+    <button onclick="enviarAccion('juego')" title="Modo Juego" class="btn-retro py-2 px-1 rounded-xl text-center border-l-2 border-emerald-500">
+      <div class="text-xs">🎮</div>
+      <div class="text-[10px] font-black text-white leading-tight">Juego</div>
+      <div class="text-[8px] font-mono text-emerald-400">9ms</div>
     </button>
   </div>
 
-  <!-- 5. SECCIÓN CENTRAL CLÁSICA: COLUMNA VOLUMEN + CRUCETA D-PAD GRANDE + COLUMNA CANALES -->
+  <!-- 6. CONSOLA CENTRAL HI-FI: ROCKER VOL + CRUCETA D-PAD GIGANTE + ROCKER CH -->
   <div class="flex items-center justify-between gap-2 flex-shrink-0 my-1">
     
-    <!-- Rocker Volumen Clásico (Izquierda) -->
-    <div class="rocker-box glass-card shadow-lg">
-      <button onclick="enviarAccion('vol_up')" title="Volumen +" class="rocker-btn btn-key">
-        <span class="text-xl">+</span>
-        <span class="text-[8.5px] text-slate-400 font-bold tracking-wider">VOL</span>
+    <!-- Rocker Volumen Clásico -->
+    <div class="retro-rocker-mod">
+      <button onclick="enviarAccion('vol_up')" title="Volumen +" class="btn-retro rocker-btn">
+        <span>+</span>
+        <span class="text-[8px] font-mono text-slate-400">VOL</span>
       </button>
-      <button onclick="enviarAccion('mute')" title="Silenciar" class="rocker-mid-btn btn-key text-amber-400 shadow">
+      <button onclick="enviarAccion('mute')" title="Silenciar / Mute" class="btn-retro rocker-sep-btn text-amber-400">
         🔇
       </button>
-      <button onclick="enviarAccion('vol_down')" title="Volumen -" class="rocker-btn btn-key">
-        <span class="text-[8.5px] text-slate-400 font-bold tracking-wider">VOL</span>
-        <span class="text-xl">-</span>
+      <button onclick="enviarAccion('vol_down')" title="Volumen -" class="btn-retro rocker-btn">
+        <span class="text-[8px] font-mono text-slate-400">VOL</span>
+        <span>-</span>
       </button>
     </div>
 
-    <!-- Cruceta D-Pad Circular Ergonómica Grande (Centro) -->
-    <div class="dpad-container mx-auto">
-      <button onclick="enviarAccion('up')" title="Arriba" class="dpad-arrow dpad-up">▲</button>
-      <button onclick="enviarAccion('down')" title="Abajo" class="dpad-arrow dpad-down">▼</button>
-      <button onclick="enviarAccion('left')" title="Izquierda" class="dpad-arrow dpad-left">◄</button>
-      <button onclick="enviarAccion('right')" title="Derecha" class="dpad-arrow dpad-right">►</button>
-      <button onclick="enviarAccion('enter')" title="Aceptar (OK)" class="dpad-center">OK</button>
+    <!-- Cruceta D-Pad Circular Retro (204px) -->
+    <div class="retro-dpad-bezel mx-auto">
+      <button onclick="enviarAccion('up')" title="Arriba" class="dpad-key dpad-k-up">▲</button>
+      <button onclick="enviarAccion('down')" title="Abajo" class="dpad-key dpad-k-down">▼</button>
+      <button onclick="enviarAccion('left')" title="Izquierda" class="dpad-key dpad-k-left">◄</button>
+      <button onclick="enviarAccion('right')" title="Derecha" class="dpad-key dpad-k-right">►</button>
+      <button onclick="enviarAccion('enter')" title="Aceptar / OK" class="dpad-k-center">OK</button>
     </div>
 
-    <!-- Rocker Canales & Entradas Clásico (Derecha) -->
-    <div class="rocker-box glass-card shadow-lg">
-      <button onclick="enviarAccion('ch_up')" title="Canal +" class="rocker-btn btn-key">
-        <span class="text-xl">+</span>
-        <span class="text-[8.5px] text-slate-400 font-bold tracking-wider">CH</span>
+    <!-- Rocker Canales y HDMI -->
+    <div class="retro-rocker-mod">
+      <button onclick="enviarAccion('ch_up')" title="Canal +" class="btn-retro rocker-btn">
+        <span>+</span>
+        <span class="text-[8px] font-mono text-slate-400">CH</span>
       </button>
-      <button onclick="enviarAccion('source')" title="Entrada / HDMI" class="rocker-mid-btn btn-key text-sky-400 text-[10px] font-black shadow">
+      <button onclick="enviarAccion('source')" title="Entrada / HDMI" class="btn-retro rocker-sep-btn text-sky-400 font-mono text-[9px]">
         HDMI
       </button>
-      <button onclick="enviarAccion('ch_down')" title="Canal -" class="rocker-btn btn-key">
-        <span class="text-[8.5px] text-slate-400 font-bold tracking-wider">CH</span>
-        <span class="text-xl">-</span>
+      <button onclick="enviarAccion('ch_down')" title="Canal -" class="btn-retro rocker-btn">
+        <span class="text-[8px] font-mono text-slate-400">CH</span>
+        <span>-</span>
       </button>
     </div>
   </div>
 
-  <!-- 6. TECLAS DE NAVEGACIÓN Y REPRODUCCIÓN MULTIMEDIA (Grandes y Cómodas) -->
+  <!-- 7. BOTONERA DE TRANSPORTE MULTIMEDIA TIPO CASSETTE / VCR (Grandes y Cómodos) -->
   <div class="grid grid-cols-5 gap-2 flex-shrink-0">
-    <button onclick="enviarAccion('back')" title="Atrás" class="btn-key h-12 rounded-2xl flex items-center justify-center text-slate-100 font-black text-lg shadow">
+    <button onclick="enviarAccion('back')" title="Atrás" class="btn-retro h-12 rounded-xl flex items-center justify-center text-slate-200 font-black text-lg">
       <span>↩</span>
     </button>
-    <button onclick="enviarAccion('rewind')" title="Rebobinar -10s" class="btn-key h-12 rounded-2xl flex items-center justify-center text-slate-100 font-black text-lg shadow">
+    <button onclick="enviarAccion('rewind')" title="Rebobinar -10s" class="btn-retro h-12 rounded-xl flex items-center justify-center text-slate-200 font-black text-lg">
       <span>⏪</span>
     </button>
-    <button onclick="enviarAccion('play_pause')" title="Play / Pausa" class="btn-key h-12 rounded-2xl text-white bg-gradient-to-b from-indigo-600 to-indigo-800 border border-indigo-400/60 flex items-center justify-center text-xl shadow-lg">
+    <button onclick="enviarAccion('play_pause')" title="Play / Pausa" class="btn-retro h-12 rounded-xl text-white bg-gradient-to-b from-indigo-600 to-indigo-800 border-indigo-400/50 flex items-center justify-center text-xl shadow-lg">
       ⏯️
     </button>
-    <button onclick="enviarAccion('fast_forward')" title="Avanzar +10s" class="btn-key h-12 rounded-2xl flex items-center justify-center text-slate-100 font-black text-lg shadow">
+    <button onclick="enviarAccion('fast_forward')" title="Avanzar +10s" class="btn-retro h-12 rounded-xl flex items-center justify-center text-slate-200 font-black text-lg">
       <span>⏩</span>
     </button>
-    <button onclick="enviarAccion('home')" title="Inicio" class="btn-key h-12 rounded-2xl flex items-center justify-center text-slate-100 font-black text-lg shadow">
+    <button onclick="enviarAccion('home')" title="Inicio (Home)" class="btn-retro h-12 rounded-xl flex items-center justify-center text-slate-200 font-black text-lg">
       <span>🏠</span>
     </button>
   </div>
 
-  <!-- 7. TECLAS DE SISTEMA Y CONTROL DE LA BARRA SHARP -->
+  <!-- 8. SISTEMA & CONMUTADOR DE BARRA SHARP VINTAGE -->
   <div class="grid grid-cols-5 gap-2 flex-shrink-0">
-    <button onclick="enviarAccion('settings')" title="Ajustes" class="btn-key h-11 rounded-2xl flex flex-col items-center justify-center text-slate-300 font-bold text-[9px] shadow">
+    <button onclick="enviarAccion('settings')" title="Ajustes" class="btn-retro h-11 rounded-xl flex flex-col items-center justify-center text-slate-300 font-bold text-[9px]">
       <span class="text-sm">⚙️</span>
-      <span>Ajustes</span>
+      <span class="font-mono">MENU</span>
     </button>
-    <button onclick="enviarAccion('info')" title="Información" class="btn-key h-11 rounded-2xl flex flex-col items-center justify-center text-slate-300 font-bold text-[9px] shadow">
+    <button onclick="enviarAccion('info')" title="Información" class="btn-retro h-11 rounded-xl flex flex-col items-center justify-center text-slate-300 font-bold text-[9px]">
       <span class="text-sm">ℹ️</span>
-      <span>Info</span>
+      <span class="font-mono">INFO</span>
     </button>
-    <!-- BOTÓN DE CONMUTACIÓN BARRA SHARP (HDMI ARC) / TV SPEAKER -->
-    <button id="btnAudioSharp" onclick="conmutarSalidaAudio()" title="Barra de Sonido Sharp (HDMI ARC)" class="btn-key h-11 rounded-2xl bg-gradient-to-b from-sky-950 via-slate-900 to-slate-900 border border-sky-400/50 flex flex-col items-center justify-center text-sky-300 font-black text-[8.5px] shadow">
+    <!-- SELECTOR DE SALIDA SHARP ARC -->
+    <button id="btnAudioSharp" onclick="conmutarSalidaAudio()" title="Conmutar Barra Sharp ARC / Altavoces TV" class="btn-retro h-11 rounded-xl flex flex-col items-center justify-center text-emerald-400 font-black text-[9px] border-emerald-500/40">
       <span class="text-sm">📢</span>
-      <span id="lblAudioOut">Barra Sharp</span>
+      <span id="lblAudioOut" class="font-mono tracking-tight">ARC: SHARP</span>
     </button>
-    <button onclick="setPlataforma('smarttube'); buscarYReproducir(event);" title="SmartTube" class="btn-key h-11 rounded-2xl bg-gradient-to-r from-red-950/80 to-slate-900 border border-red-700/60 text-red-200 font-bold text-[9px] flex flex-col items-center justify-center shadow">
+    <button onclick="setPlataforma('smarttube'); buscarYReproducir(event);" title="SmartTube" class="btn-retro h-11 rounded-xl flex flex-col items-center justify-center text-red-400 font-bold text-[9px] border-red-500/40">
       <span class="text-sm">📺</span>
-      <span>SmartTube</span>
+      <span class="font-mono">TUBE</span>
     </button>
-    <button onclick="enviarAccion('solo_audio')" title="Solo Audio (Pantalla Off)" class="btn-key h-11 rounded-2xl bg-gradient-to-r from-amber-950/60 to-slate-900 border border-amber-600/40 text-amber-200 font-bold text-[9px] flex flex-col items-center justify-center shadow">
+    <button onclick="enviarAccion('solo_audio')" title="Solo Audio (Pantalla Off)" class="btn-retro h-11 rounded-xl flex flex-col items-center justify-center text-amber-300 font-bold text-[9px] border-amber-500/40">
       <span class="text-sm">📻</span>
-      <span>Solo Audio</span>
+      <span class="font-mono">AUDIO</span>
     </button>
   </div>
 
-  <!-- 8. FOOTER: ESTADO EN VIVO & LINK DIRECTO AL HUB DE SIRI -->
-  <div class="flex items-center justify-between text-[10px] text-slate-400 px-1 border-t border-white/5 pt-1 flex-shrink-0">
+  <!-- 9. PIE DE PÁGINA RETRO CON ESTADO Y HUB SIRI -->
+  <div class="flex items-center justify-between text-[10px] text-slate-500 px-1 border-t border-slate-800/80 pt-1 flex-shrink-0 font-mono">
     <div class="flex items-center gap-1.5">
-      <span id="statusIndicator" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span id="statusTxt" class="font-mono text-slate-300 truncate max-w-[200px]">Conectado</span>
+      <span id="statusTxt" class="text-slate-400 truncate max-w-[210px]">READY // STANDBY OK</span>
     </div>
-    <a href="/siri" class="flex items-center gap-1 text-[10px] font-bold text-sky-300 bg-sky-950/60 px-2.5 py-1 rounded-xl border border-sky-700/50 active:scale-95 transition-all shadow">
-      <span>🎙️</span> <span>Siri Atajos</span>
+    <a href="/siri" class="flex items-center gap-1 font-bold text-sky-400 bg-sky-950/40 px-2.5 py-1 rounded-lg border border-sky-800/40 active:scale-95 transition-all">
+      <span>🎙️</span> <span>SIRI ATAJOS</span>
     </a>
   </div>
 
@@ -476,6 +516,7 @@
   let dispositivoActual = 'xiaomi';
   let plataformaActual = 'smarttube';
   let audioEsSharp = true;
+  let timerActualMinutos = 0;
 
   const placeholders = {
     'smarttube': '🔍 Buscar o dictar en SmartTube...',
@@ -487,17 +528,14 @@
   };
 
   function vibrar() {
-    if (navigator.vibrate) {
-      navigator.vibrate(25);
-    }
-    // Ráfaga Web Audio (Taptic Engine emulation en iOS Safari)
+    if (navigator.vibrate) navigator.vibrate(25);
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(80, ctx.currentTime);
-      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      osc.frequency.setValueAtTime(75, ctx.currentTime);
+      gain.gain.setValueAtTime(0.09, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -512,12 +550,16 @@
     ['xiaomi', 'lg', 'ambas'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (t === target) {
-        el.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all active-pill';
+        el.className = 'retro-tab active flex-1 py-1.5 text-[11px] font-bold';
       } else {
-        el.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg text-slate-400 hover:text-white transition-all';
+        el.className = 'retro-tab flex-1 py-1.5 text-[11px] font-bold';
       }
     });
-    actualizarStatus('Controlando: ' + (target === 'ambas' ? 'Ambas Televisiones' : target.toUpperCase()));
+
+    const nombreLcd = target === 'ambas' ? 'TV: AMBAS' : (target === 'lg' ? 'TV: LG 65"' : 'TV: XIAOMI');
+    document.getElementById('lcdTarget').textContent = nombreLcd;
+    actualizarStatus('CONTROL: ' + target.toUpperCase());
+    sincronizarEstadoServidor();
   }
 
   function setPlataforma(plat) {
@@ -528,9 +570,9 @@
       const btn = document.getElementById('plat-' + p);
       if (btn) {
         if (p === plat) {
-          btn.className = 'active-plat px-2.5 py-1 rounded-xl text-[10px] font-extrabold flex items-center gap-1 whitespace-nowrap transition-all shadow';
+          btn.className = 'plat-tab active-p px-2.5 py-1 rounded-lg text-[9.5px] font-bold whitespace-nowrap flex items-center gap-1';
         } else {
-          btn.className = 'plat-pill px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 whitespace-nowrap text-slate-400 hover:text-slate-200 transition-all';
+          btn.className = 'plat-tab px-2.5 py-1 rounded-lg text-[9.5px] font-bold whitespace-nowrap flex items-center gap-1 text-slate-400';
         }
       }
     });
@@ -545,15 +587,15 @@
     if (e) e.preventDefault();
     vibrar();
     const query = document.getElementById('inputBusqueda').value.trim();
-    actualizarStatus('▶ Enviando ' + plataformaActual.toUpperCase() + (query ? ': ' + query : '...'));
+    actualizarStatus('LANZANDO ' + plataformaActual.toUpperCase() + (query ? ': ' + query : '...'));
 
     try {
       const url = '/api/voice?q=' + encodeURIComponent(query) + '&platform=' + encodeURIComponent(plataformaActual) + '&target=' + encodeURIComponent(dispositivoActual);
       const res = await fetch(url);
       const data = await res.json();
-      actualizarStatus(data.mensaje || 'Lanzado con éxito');
+      actualizarStatus(data.mensaje || 'STREAM ENVIADO');
     } catch(err) {
-      actualizarStatus('Error conectando');
+      actualizarStatus('ERR CONEXIÓN');
     }
   }
 
@@ -566,8 +608,9 @@
       if (data.ok && data.mensaje) {
         actualizarStatus(data.mensaje);
       }
+      setTimeout(sincronizarEstadoServidor, 600);
     } catch(e) {
-      actualizarStatus('Error de red');
+      actualizarStatus('ERR TRANSMISIÓN');
     }
   }
 
@@ -575,10 +618,12 @@
     vibrar();
     audioEsSharp = !audioEsSharp;
     const cmd = audioEsSharp ? 'audio_sharp' : 'audio_tv';
-    const label = audioEsSharp ? 'Barra Sharp' : 'Altavoz TV';
+    const label = audioEsSharp ? 'ARC: SHARP' : 'SPK: TV';
+    const lcdTxt = audioEsSharp ? 'ARC: SHARP' : 'SPK: TV';
     document.getElementById('lblAudioOut').textContent = label;
+    document.getElementById('lcdAudio').textContent = lcdTxt;
     enviarAccion(cmd);
-    actualizarStatus(audioEsSharp ? '📢 Audio: Barra Sharp (HDMI ARC)' : '📺 Audio: Altavoz TV');
+    actualizarStatus(audioEsSharp ? 'AUDIO: BARRA SHARP (HDMI ARC)' : 'AUDIO: ALTAVOCES TV');
   }
 
   function actualizarLabelBrillo(v) {
@@ -598,21 +643,25 @@
   function solicitarEncendido() {
     vibrar();
     enviarAccion('encender');
-    actualizarStatus('⚡ Encendiendo TV (' + dispositivoActual.toUpperCase() + ')...');
+    actualizarStatus('ENCENDIENDO ' + dispositivoActual.toUpperCase());
   }
 
   function solicitarApagado() {
     vibrar();
     if (confirm('¿Poner en Standby / Apagar ' + dispositivoActual.toUpperCase() + '?')) {
       enviarAccion('apagar');
-      actualizarStatus('🔌 Apagando...');
+      actualizarStatus('STANDBY / APAGANDO...');
     }
   }
 
   function confirmarCancelarTimer() {
+    if (timerActualMinutos <= 0) return;
     vibrar();
-    if (confirm('¿Cancelar temporizador de apagado de 90m?')) {
+    if (confirm('¿Cancelar temporizador de apagado de ' + timerActualMinutos + ' min?')) {
       enviarAccion('cancelar_timer');
+      actualizarStatus('TEMPORIZADOR CANCELADO');
+      document.getElementById('lcdTimer').textContent = '⏱ SLEEP: OFF';
+      timerActualMinutos = 0;
     }
   }
 
@@ -621,26 +670,28 @@
       const res = await fetch('/api/status');
       const data = await res.json();
       
-      const badge = document.getElementById('timerBadge');
       let minRest = 0;
       if (dispositivoActual === 'lg') minRest = data.timer_lg;
       else if (dispositivoActual === 'xiaomi') minRest = data.timer_xiaomi;
       else minRest = Math.max(data.timer_lg, data.timer_xiaomi);
 
+      timerActualMinutos = minRest;
+      const lcdTimer = document.getElementById('lcdTimer');
       if (minRest > 0) {
-        badge.textContent = minRest + 'm';
-        badge.classList.remove('hidden');
+        lcdTimer.textContent = '⏱ SLEEP: ' + minRest + 'm';
+        lcdTimer.className = 'font-bold cursor-pointer text-amber-300 animate-pulse';
       } else {
-        badge.textContent = '90m';
+        lcdTimer.textContent = '⏱ SLEEP: OFF';
+        lcdTimer.className = 'font-bold cursor-pointer text-emerald-400';
       }
     } catch(e) {}
   }
 
-  setInterval(sincronizarEstadoServidor, 5000);
+  setInterval(sincronizarEstadoServidor, 4000);
   sincronizarEstadoServidor();
 
   function actualizarStatus(txt) {
-    document.getElementById('statusTxt').textContent = txt;
+    document.getElementById('statusTxt').textContent = txt.toUpperCase();
   }
 </script>
 </body>

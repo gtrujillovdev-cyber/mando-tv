@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-[#07090e]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07090e">
+  <title>Atajos de Voz de Siri - Mando TV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+    }
+    body {
+      background-color: #07090e;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .glass-card {
+      background: rgba(18, 24, 38, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body class="min-h-full p-4 flex flex-col justify-between" style="padding-top: max(var(--sat), 16px); padding-bottom: max(var(--sab), 24px);">
+
+  <div class="max-w-md mx-auto w-full space-y-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-2 border-b border-white/10">
+      <a href="/" class="text-sky-400 hover:text-white flex items-center gap-1 text-xs font-bold bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700 active:scale-95 transition-all">
+        <span>↩</span> <span>Mando</span>
+      </a>
+      <h1 class="text-sm font-black text-white flex items-center gap-1.5">
+        <span>🎙️</span> <span>Atajos de Voz de Siri</span>
+      </h1>
+      <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800/50">Online</span>
+    </div>
+
+    <!-- Intro -->
+    <div class="glass-card p-3 rounded-2xl space-y-1.5 border border-sky-500/20">
+      <div class="text-xs font-bold text-sky-300">Habla con Siri desde tu iPhone, Apple Watch o HomePod</div>
+      <p class="text-[11px] text-slate-300 leading-relaxed">
+        Comandos diferenciados para <strong>LG 65"</strong>, <strong>Xiaomi MiTV</strong> o <strong>Ambas</strong>. Cada atajo ejecuta la acción y Siri te contesta en español natural.
+      </p>
+    </div>
+
+    <!-- Filtros de Televisión -->
+    <div class="flex gap-1.5 bg-slate-900/90 p-1 rounded-2xl border border-white/5">
+      <button onclick="filtrar('todas')" id="btn-todas" class="tab-btn flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all bg-sky-600 text-white shadow">
+        🔘 Todas
+      </button>
+      <button onclick="filtrar('lg')" id="btn-lg" class="tab-btn flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all text-slate-400 hover:text-white">
+        🔵 LG 65"
+      </button>
+      <button onclick="filtrar('xiaomi')" id="btn-xiaomi" class="tab-btn flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all text-slate-400 hover:text-white">
+        🟠 Xiaomi
+      </button>
+      <button onclick="filtrar('ambas')" id="btn-ambas" class="tab-btn flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all text-slate-400 hover:text-white">
+        🟣 Ambas
+      </button>
+    </div>
+
+    <!-- Tarjetas de Atajos -->
+    <div class="space-y-2.5" id="shortcutsContainer">
+
+      <!-- ================= LG 65" ================= -->
+      <!-- LG Encender -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-sky-500/30" data-target="lg">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">⚡</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, enciende la tele LG"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-sky-950 text-sky-300 rounded border border-sky-700/60 font-bold">LG</span>
+              </div>
+              <div class="text-[10px] text-sky-300">Envía paquete mágico Wake-on-LAN a la LG 65"</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=encender&target=lg')" class="px-2.5 py-1 bg-sky-600 active:bg-sky-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-lg-on" value="http://192.168.1.205:8899/api/siri?action=encender&target=lg" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-lg-on')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- LG Apagar -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-rose-500/30" data-target="lg">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🔌</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, apaga la tele LG"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-sky-950 text-sky-300 rounded border border-sky-700/60 font-bold">LG</span>
+              </div>
+              <div class="text-[10px] text-rose-300">Apagado por WebSocket SSAP</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=apagar&target=lg')" class="px-2.5 py-1 bg-rose-600 active:bg-rose-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-lg-off" value="http://192.168.1.205:8899/api/siri?action=apagar&target=lg" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-lg-off')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- LG Modo Noche -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-indigo-500/30" data-target="lg">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🌙</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, modo noche en la LG"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-sky-950 text-sky-300 rounded border border-sky-700/60 font-bold">LG</span>
+              </div>
+              <div class="text-[10px] text-indigo-300">LG: Retroiluminación al 6% + temporizador 90m</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=noche&target=lg')" class="px-2.5 py-1 bg-indigo-600 active:bg-indigo-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-lg-noche" value="http://192.168.1.205:8899/api/siri?action=noche&target=lg" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-lg-noche')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- LG Modo Día -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-amber-500/30" data-target="lg">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">☀️</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, modo día en la LG"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-sky-950 text-sky-300 rounded border border-sky-700/60 font-bold">LG</span>
+              </div>
+              <div class="text-[10px] text-amber-300">LG: Retroiluminación al 100%</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=dia&target=lg')" class="px-2.5 py-1 bg-amber-600 active:bg-amber-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-lg-dia" value="http://192.168.1.205:8899/api/siri?action=dia&target=lg" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-lg-dia')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- ================= XIAOMI MITV ================= -->
+      <!-- Xiaomi Encender -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-orange-500/30" data-target="xiaomi">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">⚡</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, enciende la Xiaomi"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
+              </div>
+              <div class="text-[10px] text-orange-300">Restaura brillo y despierta por ADB</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=encender&target=xiaomi')" class="px-2.5 py-1 bg-orange-600 active:bg-orange-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-xm-on" value="http://192.168.1.205:8899/api/siri?action=encender&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-xm-on')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- Xiaomi Apagar -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-rose-500/30" data-target="xiaomi">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🔌</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, apaga la Xiaomi"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
+              </div>
+              <div class="text-[10px] text-rose-300">Standby (brillo=0, vol=0) preservando Wi-Fi</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=apagar&target=xiaomi')" class="px-2.5 py-1 bg-rose-600 active:bg-rose-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-xm-off" value="http://192.168.1.205:8899/api/siri?action=apagar&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-xm-off')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- Xiaomi Modo Noche -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-indigo-500/30" data-target="xiaomi">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🌙</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, modo noche en la Xiaomi"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
+              </div>
+              <div class="text-[10px] text-indigo-300">Xiaomi: Brillo 15/255 + temporizador 90m</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=noche&target=xiaomi')" class="px-2.5 py-1 bg-indigo-600 active:bg-indigo-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-xm-noche" value="http://192.168.1.205:8899/api/siri?action=noche&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-xm-noche')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- Xiaomi Modo Día -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-amber-500/30" data-target="xiaomi">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">☀️</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, modo día en la Xiaomi"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
+              </div>
+              <div class="text-[10px] text-amber-300">Xiaomi: Brillo 255/255</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=dia&target=xiaomi')" class="px-2.5 py-1 bg-amber-600 active:bg-amber-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-xm-dia" value="http://192.168.1.205:8899/api/siri?action=dia&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-xm-dia')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- Xiaomi SmartTube -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-red-500/30" data-target="xiaomi">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">📺</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, pon SmartTube"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
+              </div>
+              <div class="text-[10px] text-red-300">Lanza SmartTube (YouTube sin anuncios)</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=reproducir&platform=smarttube&target=xiaomi')" class="px-2.5 py-1 bg-red-600 active:bg-red-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-xm-st" value="http://192.168.1.205:8899/api/siri?action=reproducir&platform=smarttube&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-xm-st')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- ================= AMBAS (SALÓN / MAESTRO) ================= -->
+      <!-- Ambas Encender -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-emerald-500/30" data-target="ambas">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">⚡</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, enciende las teles"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-purple-950 text-purple-300 rounded border border-purple-700/60 font-bold">Ambas</span>
+              </div>
+              <div class="text-[10px] text-emerald-300">Despierta ambas pantallas simultáneamente</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=encender&target=ambas')" class="px-2.5 py-1 bg-emerald-600 active:bg-emerald-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-ambas-on" value="http://192.168.1.205:8899/api/siri?action=encender&target=ambas" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-ambas-on')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- Ambas Apagar -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-rose-500/30" data-target="ambas">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🔌</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, apaga las teles"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-purple-950 text-purple-300 rounded border border-purple-700/60 font-bold">Ambas</span>
+              </div>
+              <div class="text-[10px] text-rose-300">Apaga la LG y pone la Xiaomi en Standby</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=apagar&target=ambas')" class="px-2.5 py-1 bg-rose-600 active:bg-rose-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-ambas-off" value="http://192.168.1.205:8899/api/siri?action=apagar&target=ambas" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-ambas-off')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- Ambas Modo Noche -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-indigo-500/30" data-target="ambas">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🌙</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, modo noche en el salón"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-purple-950 text-purple-300 rounded border border-purple-700/60 font-bold">Ambas</span>
+              </div>
+              <div class="text-[10px] text-indigo-300">Brillo al 6% y temporizador de 90m en ambas</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=noche&target=ambas')" class="px-2.5 py-1 bg-indigo-600 active:bg-indigo-700 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-ambas-noche" value="http://192.168.1.205:8899/api/siri?action=noche&target=ambas" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-ambas-noche')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+      <!-- Estado de las Teles -->
+      <div class="shortcut-card glass-card p-3 rounded-2xl space-y-2 border border-slate-700" data-target="ambas">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">ℹ️</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">"Oye Siri, estado de las teles"</span>
+                <span class="text-[9px] px-1.5 py-0.2 bg-purple-950 text-purple-300 rounded border border-purple-700/60 font-bold">Ambas</span>
+              </div>
+              <div class="text-[10px] text-slate-400">Verifica si están encendidas o en espera</div>
+            </div>
+          </div>
+          <button onclick="probarSiri('/api/siri?action=status')" class="px-2.5 py-1 bg-slate-700 active:bg-slate-600 text-white rounded-xl text-[10px] font-bold shadow">
+            Probar
+          </button>
+        </div>
+        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
+          <input readonly id="url-ambas-status" value="http://192.168.1.205:8899/api/siri?action=status" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+          <button onclick="copiar('url-ambas-status')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Guía Paso a Paso -->
+    <div class="glass-card p-3.5 rounded-2xl space-y-2 border border-white/10">
+      <div class="text-xs font-bold text-white flex items-center gap-1.5">
+        <span>⚙️</span> <span>Cómo crearlo en tu iPhone en 30 segundos</span>
+      </div>
+      <ol class="text-[11px] text-slate-300 space-y-1 list-decimal list-inside leading-relaxed">
+        <li>Abre la app nativa <strong>Atajos (Shortcuts)</strong> en tu iPhone.</li>
+        <li>Toca el botón <strong>+</strong> (arriba a la derecha).</li>
+        <li>Añade la acción: <strong>"Obtener contenido de la URL"</strong>.</li>
+        <li>Pega el enlace correspondiente que copiaste arriba.</li>
+        <li>Añade debajo la acción: <strong>"Leer texto con la voz"</strong> con el resultado de la URL para que Siri te conteste en voz alta.</li>
+        <li>Pon como nombre del atajo la frase exacta que le dirás (ej. <em>"Enciende la tele LG"</em>).</li>
+      </ol>
+    </div>
+
+    <div id="toastSiri" class="hidden text-center text-xs font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-700/60 p-2.5 rounded-xl animate-bounce">
+      URL copiada al portapapeles. ¡Pégala en Atajos!
+    </div>
+  </div>
+
+  <script>
+    function filtrar(target) {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.className = 'tab-btn flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all text-slate-400 hover:text-white';
+      });
+      const activeBtn = document.getElementById('btn-' + target);
+      if (activeBtn) {
+        activeBtn.className = 'tab-btn flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all bg-sky-600 text-white shadow';
+      }
+
+      const cards = document.querySelectorAll('.shortcut-card');
+      cards.forEach(card => {
+        if (target === 'todas' || card.getAttribute('data-target') === target) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    function copiar(id) {
+      const input = document.getElementById(id);
+      navigator.clipboard.writeText(input.value);
+      const t = document.getElementById('toastSiri');
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 2500);
+    }
+
+    async function probarSiri(url) {
+      try {
+        const res = await fetch(url);
+        const txt = await res.text();
+        if ('speechSynthesis' in window) {
+          const u = new SpeechSynthesisUtterance(txt);
+          u.lang = 'es-ES';
+          window.speechSynthesis.speak(u);
+        } else {
+          alert('Respuesta de Siri: ' + txt);
+        }
+      } catch (e) {
+        alert('Error ejecutando atajo');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+[Unit]
+Description=Mando TV - Universal Remote & Siri Voice Automation Hub
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/mando-tv
+ExecStart=/usr/bin/python3 -m src.server 8899
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+Environment=LG_TV_IP=192.168.1.250
+Environment=XIAOMI_TV_IP=192.168.1.238
+
+[Install]
+WantedBy=multi-user.target

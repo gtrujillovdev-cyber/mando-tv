@@ -1,0 +1,4 @@
+# Mando TV - Dependencies
+# Pure Python 3 standard library is supported for all core features (HTTP, ADB, WoL).
+# Optional dependency for LG webOS WebSocket SSAP communication:
+websockets>=12.0

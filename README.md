@@ -127,11 +127,46 @@ El servidor incluye un portal web interactivo en `http://<IP_HOST>:8899/siri` co
 git clone https://github.com/gtrujillovdev-cyber/mando-tv.git
 cd mando-tv
 
-# Instalar dependencias opcionales
 pip install -r requirements.txt
 
-# Iniciar servidor en el puerto 8899
-python3 -m src.server 8899
+# Iniciar servidor (puerto 8899 por defecto, ver variables de entorno abajo)
+python3 -m mando_tv
+
+# CLI (escenas, apagado, temporizadores, estado)
+python3 -m mando_tv.cli --status
+```
+
+### Despliegue 24/7 (Raspberry Pi o cualquier host)
+
+```bash
+./deploy/deploy.sh usuario@IP_RASPBERRY   # systemd en Linux, LaunchAgent en macOS
+```
+
+### Configuración (variables de entorno)
+
+| Variable | Por defecto | Descripción |
+|---|---|---|
+| `LG_TV_IP` / `LG_TV_MAC` | `192.168.1.250` | LG webOS |
+| `XIAOMI_TV_IP` / `XIAOMI_TV_MAC` | `192.168.1.238` | Xiaomi Android TV (ADB 5555) |
+| `MANDO_PORT` | `8899` | Puerto HTTP |
+| `LG_CONFIG` | `~/.config/lg_tv/config.json` | Clave de emparejamiento LG |
+
+### Estructura
+
+```
+mando_tv/
+├── config.py     # IPs, puertos, rutas (env)
+├── wol.py        # Wake-on-LAN
+├── lg.py         # LG webOS (SSAP: teclas, apps, audio, escenas)
+├── xiaomi.py     # Xiaomi (ADB)
+├── timers.py     # Temporizadores de apagado
+├── scenes.py     # Escenas conjuntas
+├── streaming.py  # Lanzador SmartTube/Netflix/Prime/Disney+/Spotify
+├── status.py     # Diagnóstico
+├── server.py     # HTTP + API + Siri
+├── cli.py        # Línea de comandos
+└── web/          # index.html (mando), siri.html (atajos)
+deploy/deploy.sh  # Despliegue remoto
 ```
 
 Acceso desde tu iPhone:

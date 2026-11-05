@@ -266,7 +266,7 @@ def cancelar_temporizador_lg(silencioso: bool = False):
                 contenido = f.read().strip()
             pid = contenido.split(":")[0] if ":" in contenido else contenido
             if pid:
-                subprocess.run(f"kill -9 {pid} 2>/dev/null", shell=True)
+                subprocess.run(f"pkill -P {pid} 2>/dev/null; kill -9 {pid} 2>/dev/null", shell=True)
             os.remove(TIMER_FILE_LG)
             if not silencioso:
                 asyncio.run(enviar_comando_lg("toast", {"mensaje": "⏱️ Temporizador de apagado LG: CANCELADO"}))

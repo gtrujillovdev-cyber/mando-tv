@@ -46,7 +46,8 @@ class MandoHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.end_headers()
-                self.wfile.write(_leer_web("siri.html"))
+                host = self.headers.get("Host") or "localhost"
+                self.wfile.write(_leer_web("siri.html").replace(b"192.168.1.205:8899", host.encode()))
 
             elif url.path == "/api/status":
                 self.send_response(200)

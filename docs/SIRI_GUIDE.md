@@ -21,7 +21,7 @@ En ella puedes:
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
 │  Acción 1: Obtener contenido de URL                              │
-│  URL: http://192.168.1.205:8899/api/siri?action=encender&target=lg
+│  URL: http://IP_SERVIDOR:8899/api/siri?action=encender&target=lg
 │  Método: GET                                                     │
 └──────────────────────────────────────────────────────────────────┘
                                   │ (Pasa el texto de respuesta)

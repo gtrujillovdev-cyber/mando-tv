@@ -444,6 +444,7 @@ def _ip_local() -> str:
 
 def iniciar_servidor():
     lg.precalentar()
+    xiaomi.conectar_adb_xiaomi()
     server = ThreadingHTTPServer(("0.0.0.0", PUERTO), MandoHandler)
     print(f"\n{'='*70}")
     print(f" 🎛️  MANDO UNIVERSAL & HUB SIRI EN LÍNEA (iPhone 16 Calibrado)")

@@ -1,195 +1,191 @@
-<div align="center">
+# Mando TV
 
-# 🎛️ Mando TV: Universal Smart TV Controller & Siri Voice Hub
+Control unificado del salón desde el iPhone — sin mandos físicos.
 
-**Middleware domótico de ultra-baja latencia (<15ms) para control unificado de Smart TVs (LG webOS & Android TV) con PWA móvil táctil para iPhone 16, conmutación HDMI ARC para barra de sonido Sharp e integración conversacional bidireccional con Apple Siri Shortcuts.**
-
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](#)
-[![iOS Safari](https://img.shields.io/badge/iOS_18-PWA_100dvh-black.svg?logo=apple&logoColor=white)](#)
-[![Latency](https://img.shields.io/badge/Latency-%3C15ms_Async-brightgreen.svg)](#)
-[![Protocols](https://img.shields.io/badge/Protocols-SSAP_WebSocket_%7C_ADB_%7C_WoL_%7C_HDMI--eARC-orange.svg)](#)
-[![Voice](https://img.shields.io/badge/Voice_AI-Apple_Siri_Webhooks-purple.svg?logo=apple)](#)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-[Características](#-resumen-ejecutivo) • [Arquitectura](#-arquitectura-técnica) • [Ergonomía iPhone 16](#-diseño-y-ergonomía-móvil-iphone-16) • [Barra Sharp ARC](#-gestión-de-audio--barra-de-sonido-sharp) • [Atajos de Siri](#-integración-con-apple-siri-por-dispositivo) • [Retos de Ingeniería](#-retos-de-ingeniería-resueltos) • [Despliegue](#-puesta-en-marcha) • [Portfolio LinkedIn](#-destacado-profesional-para-linkedin)
-
-</div>
+Servidor Python ligero alojado en una **Raspberry Pi** que conecta simultáneamente una **LG 65" webOS** (via WebSocket SSAP) y una **Xiaomi MiTV Android TV** (via ADB) y los expone como una API REST simple. El iPhone lo controla todo: por voz con Siri, con un mando táctil web o con la app Atajos.
 
 ---
 
-## 🌟 Resumen Ejecutivo
+## Qué puede hacer
 
-**Mando TV** es una solución de domótica personalizada diseñada para resolver la fragmentación de ecosistemas en el salón doméstico. Permite controlar simultáneamente una **LG 65" con webOS**, una **Xiaomi MiTV con Android TV** y una **Barra de Sonido Sharp** conectada por HDMI eARC / ARC, ofreciendo:
-
-1. **Interfaz Web Móvil PWA (Tuned para iPhone 16):** Diseño en modo oscuro estilo cristal (*glassmorphism*), ajustado estrictamente a `100dvh` con **cero scroll**, cruceta D-Pad táctil generosa de **`204px`**, columnas de volumen y canales de **`66px × 204px`** y simulación háptica (*Taptic Engine*) mediante Web Audio API.
-2. **Control por Voz Diferenciado con Apple Siri:** Comandos específicos por pantalla (*"Oye Siri, enciende la tele LG"*, *"Oye Siri, pon SmartTube en la Xiaomi"*, *"Oye Siri, apaga las teles"*) con respuesta hablada en español sin requerir pasarelas de HomeKit ni cuotas mensuales.
-3. **Conmutación Inteligente de Audio (Barra Sharp ARC):** Control directo de enrutamiento de sonido mediante WebSocket SSAP (`ssap://audio/changeSoundOutput`), permitiendo alternar al instante entre **Barra Sharp (HDMI eARC/ARC)** y **Altavoces TV**, sincronizando el volumen vía HDMI-CEC (SIMPLINK).
-4. **Lanzador Universal de Streaming:** Deep-linking directo hacia **SmartTube** (YouTube sin anuncios), **YouTube**, **Netflix**, **Prime Video**, **Disney+** y **Spotify** tanto vía Intents de Android como mediante el bus de servicios Luna de webOS.
-5. **Modos de Iluminación Circadiana:** Presets inmediatos para confort visual (*Modo Noche: brillo 6%, volumen suave y temporizador automático de apagado a 90 minutos*) y modos Cine, Día, Juego y Solo Audio.
+| Función | LG 65" | Xiaomi MiTV |
+|---|:---:|:---:|
+| Encender / Apagar | WoL + SSAP | WoL + ADB |
+| Volumen, mute | SSAP | ADB keyevent |
+| Navegación D-Pad | SSAP puntero | ADB keyevent |
+| Modos imagen (Noche, Día, Cine, Juego) | SSAP settings | ADB settings |
+| Timer apagado automático | Proceso Pi | Proceso Android |
+| Abrir Netflix, Prime, Disney+, Spotify | webOS luna | Android intent |
+| Buscar en SmartTube / Netflix / YouTube | webOS luna | Android intent |
+| Cambiar audio a barra Sharp (HDMI ARC) | SSAP audio | — |
+| Solo audio (pantalla apagada) | SSAP energySaving | — |
 
 ---
 
-## 🏗️ Arquitectura Técnica
+## Cómo controlarlo
 
-```mermaid
-flowchart TD
-    subgraph Clientes ["📱 Clientes de Control"]
-        PWA["iPhone 16 PWA (Safari / Home Screen)<br/>100dvh Zero-Scroll + Haptic Feedback"]
-        Siri["Apple Siri / Shortcuts<br/>'Oye Siri, enciende la tele LG'"]
-    end
+### 1 — Voz (Siri)
+34 atajos instalados en el iPhone. Con Apple Intelligence activo (iOS 26+) di directamente el nombre:
 
-    subgraph Hub ["⚡ Servidor Central (Mac M4 / Raspberry Pi)"]
-        HTTP["ThreadingHTTPServer (Puerto 8899)<br/>Daemon Worker Pool Concurrente"]
-        Router["Router de Rutas (/api/action, /api/siri, /api/voice)"]
-        AsyncDispatcher["Despachador Asíncrono Multi-hilo<br/>(Latencia HTTP < 15ms)"]
-        StateEngine["Gestor de Estado y Presets<br/>(Día, Noche, Timers 90m, Audio Routing)"]
-    end
+```
+"Oye Siri, enciende la tele LG"
+"Oye Siri, baja el volumen Xiaomi"
+"Oye Siri, abre Netflix en la LG"
+"Oye Siri, busca en SmartTube"      ← te pide el título
+"Oye Siri, modo noche LG"
+"Oye Siri, apaga las teles"
+```
 
-    subgraph Hardware ["📺 Ecosistema del Salón"]
-        LG["LG 65' Smart TV (webOS)<br/>192.168.1.250 (SSAP WebSocket & WoL)"]
-        Xiaomi["Xiaomi MiTV 55' (Android TV)<br/>192.168.1.238 (ADB TCP/IP 5555)"]
-        Soundbar["Barra de Sonido Sharp<br/>(HDMI eARC / ARC + HDMI-CEC SIMPLINK)"]
-    end
+Catálogo completo → [`docs/SIRI_GUIDE.md`](docs/SIRI_GUIDE.md)
 
-    PWA -->|HTTP GET /api/action| HTTP
-    Siri -->|HTTP GET /api/siri| HTTP
-    HTTP --> Router --> AsyncDispatcher
-    AsyncDispatcher --> StateEngine
-    StateEngine -->|JSON-RPC WebSocket| LG
-    StateEngine -->|Subshell ADB Intents & Keyevents| Xiaomi
-    LG -.->|HDMI-CEC Audio/Vol Sync| Soundbar
-    Router -.->|Respuesta de Voz Inmediata| Siri
-    Router -.->|Haptic JSON Inmediato| PWA
+### 2 — Mando táctil web (iPhone, cualquier navegador)
+```
+http://192.168.1.141:8899
+```
+PWA instalable desde Safari → pantalla de inicio del iPhone. D-pad táctil, rocker de volumen/canales, modos y lanzadores de streaming. Latencia < 15ms.
+
+### 3 — CLI desde el Mac
+```bash
+python3 -m mando_tv.cli --status          # Estado completo
+python3 -m mando_tv.cli --modo-noche      # Noche en ambas TVs
+python3 -m mando_tv.cli --apagar-tvs      # Apagar todo
+python3 -m mando_tv.cli --help
 ```
 
 ---
 
-## 📱 Diseño y Ergonomía Móvil (iPhone 16)
+## Arquitectura
 
-Uno de los mayores retos en aplicaciones de control remoto web es conseguir la **misma ergonomía y respuesta física que un mando de plástico tradicional**:
+```
+iPhone
+  ├── Siri ("Oye Siri, enciende la LG")
+  ├── Safari PWA  (mando táctil)
+  └── App Atajos  (automatizaciones)
+           │
+           │  HTTP GET  (LAN 192.168.1.141:8899)
+           ▼
+    Raspberry Pi 3B
+    ├── Python HTTP server (puerto 8899, ThreadingHTTPServer)
+    ├── Hilo keepalive ADB (reconecta Xiaomi cada 60s)
+    ├── Bucle asyncio LG (conexión SSAP persistente + socket puntero)
+    │
+    ├── LG 65"  192.168.1.250 ──── WebSocket SSAP (puerto 3000)
+    └── Xiaomi  192.168.1.238 ──── ADB TCP/IP    (puerto 5555)
+                                        └── HDMI ARC ── Barra Sharp
+```
 
-- **Cruceta D-Pad de Pulgar (`204px × 204px`):** Construida con geometría circular proporcional y áreas táctiles generosas (`78px × 54px` para arriba/abajo y `54px × 78px` para izquierda/derecha) y un botón central de **`72px`** para el comando `OK`.
-- **Rocker Columns (`66px × 204px`):** Botones de Volumen (`+`, `-`, `MUTE`) y Canales (`+`, `-`, `HDMI`) de gran altura con etiquetas visuales de alto contraste.
-- **Teclas Multimedia de `48px`:** Botones de navegación (Atrás, Rewind, Play/Pausa, FastForward, Home) con radio de curvatura suave y respuesta activa inmediata.
-- **100dvh Zero-Scroll Guarantee:** Ajustado al píxel mediante CSS dinámico `height: 100dvh` y `env(safe-area-inset-top)` / `env(safe-area-inset-bottom)`, eliminando cualquier desplazamiento vertical accidental.
-
----
-
-## 🔊 Gestión de Audio & Barra de Sonido Sharp
-
-La barra de sonido Sharp se conecta directamente a la toma **HDMI eARC / ARC** de la televisión (HDMI 2 en la LG 65"):
-
-- **Conmutación por Software SSAP:** El servidor implementa la llamada `ssap://audio/changeSoundOutput` con payload `external_arc` (Barra Sharp) o `tv_speaker` (altavoces internos).
-- **Botón `📢 Barra Sharp`:** Con un solo toque en el mando, el usuario conmuta entre ambos modos sin tener que navegar por los menús de ajustes de la televisión.
-- **Sincronización de Volumen HDMI-CEC (SIMPLINK):** Toda orden de volumen (`+ VOL`, `- VOL`, `MUTE`) enviada a la tele se propaga de forma transparente por el bus CEC hacia la barra Sharp.
-
----
-
-## 🎙️ Integración con Apple Siri por Dispositivo
-
-A través del endpoint `/api/siri`, el sistema responde en lenguaje natural hablado en español, permitiendo atajos de 2 pasos en la app nativa **Atajos de Apple**:
-
-### Comandos de Voz Disponibles:
-
-| Frase que le dices a Siri | URL del Webhook | Respuesta Hablada de Siri |
-| :--- | :--- | :--- |
-| **"Oye Siri, enciende la tele LG"** | `/api/siri?action=encender&target=lg` | *"Televisión LG encendida."* |
-| **"Oye Siri, apaga la tele LG"** | `/api/siri?action=apagar&target=lg` | *"Televisión LG apagada."* |
-| **"Oye Siri, modo noche en la LG"** | `/api/siri?action=noche&target=lg` | *"Modo Noche activado en la televisión LG. Retroiluminación al 6% y temporizador de 90 minutos."* |
-| **"Oye Siri, enciende la Xiaomi"** | `/api/siri?action=encender&target=xiaomi` | *"Televisión Xiaomi encendida."* |
-| **"Oye Siri, apaga la Xiaomi"** | `/api/siri?action=apagar&target=xiaomi` | *"Televisión Xiaomi apagada y en modo de bajo consumo."* |
-| **"Oye Siri, modo noche en la Xiaomi"** | `/api/siri?action=noche&target=xiaomi` | *"Modo Noche activado en la Xiaomi con temporizador de 90 minutos."* |
-| **"Oye Siri, pon SmartTube"** | `/api/siri?action=reproducir&platform=smarttube&target=xiaomi` | *"Abriendo SmartTube en la Xiaomi."* |
-| **"Oye Siri, enciende las teles"** | `/api/siri?action=encender&target=ambas` | *"Ambas televisiones encendidas."* |
-| **"Oye Siri, apaga las teles"** | `/api/siri?action=apagar&target=ambas` | *"Ambas televisiones apagadas."* |
-| **"Oye Siri, audio en la barra Sharp"** | `/api/siri?action=audio_sharp&target=lg` | *"Audio cambiado a la barra de sonido Sharp por HDMI ARC."* |
-| **"Oye Siri, estado de las teles"** | `/api/siri?action=status` | *"Estado actual: La televisión LG está encendida y la televisión Xiaomi está en espera."* |
-
-El servidor incluye un portal web interactivo en `http://<IP_HOST>:8899/siri` con filtros por dispositivo (**🔘 Todas**, **🔵 LG 65"**, **🟠 Xiaomi**, **🟣 Ambas**) para probar la síntesis de voz en el navegador y copiar los enlaces con un clic.
+**Por qué la latencia es < 15ms:** el servidor devuelve `200 OK` al iPhone de inmediato y delega el comando de red a un hilo en segundo plano. El móvil nunca espera la respuesta de la TV.
 
 ---
 
-## 🔬 Retos de Ingeniería Resueltos
+## Puesta en marcha
 
-### 1. Cuello de botella de latencia: Reducción de 1.475 ms a 10 ms (150x más rápido)
-* **Problema:** Cada pulsación de botón tardaba ~1,5 segundos al arrancar una nueva JVM de Android y abrir un handshake TCP por cada pulsación.
-* **Solución:** Desacoplamiento concurrente. El servidor devuelve `200 OK` JSON al cliente móvil en **10.06 ms**, delegando el comando de red o ADB a un pool de hilos asíncronos (`threading.Thread`).
+### Prerequisitos
+- Raspberry Pi en la misma LAN que las TVs
+- LG: `Ajustes → Conexión → Red → Wake-on-LAN: ON`
+- Xiaomi: `Opciones desarrollador → Depuración ADB por red: ON (puerto 5555)`
+- Mac con `~/.config/lg_tv/config.json` (clave de emparejamiento LG)
 
-### 2. Pérdida de conectividad Wi-Fi en Android TV al apagar (Modo Standby 0% Backlight)
-* **Problema:** En Xiaomi MiTV, el comando de apagado profundo (`input keyevent 26`) desactiva el chip Wi-Fi, imposibilitando el encendido remoto por red.
-* **Solución:** Algoritmo de *Soft-Standby Inteligente*. Al pulsar "Apagar", el sistema baja la retroiluminación a 0% (`screen_brightness 0`), silencia el audio (`cmd audio set-volume 3 0`) y pausa medios. La televisión parece completamente apagada y consume energía mínima, manteniendo el demonio ADB y la conexión Wi-Fi listos para reactivarse en <300 ms.
-
----
-
-## 🚀 Puesta en Marcha
-
+### Despliegue
 ```bash
-git clone https://github.com/gtrujillovdev-cyber/mando-tv.git
+git clone <repo>
 cd mando-tv
 
-pip install -r requirements.txt
+# Desplegar en Raspberry Pi (crea servicio systemd que arranca en boot)
+./deploy/deploy.sh raspberry@<IP_PI>
 
-# Iniciar servidor (puerto 8899 por defecto, ver variables de entorno abajo)
-python3 -m mando_tv
-
-# CLI (escenas, apagado, temporizadores, estado)
-python3 -m mando_tv.cli --status
+# Acceder
+# Mando:  http://<IP_PI>:8899
+# Siri:   http://<IP_PI>:8899/siri
 ```
 
-### Despliegue 24/7 (Raspberry Pi o cualquier host)
+### Variables de entorno (opcionales)
+| Variable | Por defecto |
+|---|---|
+| `LG_TV_IP` | `192.168.1.250` |
+| `LG_TV_MAC` | `74:e6:b8:26:02:0e` |
+| `XIAOMI_TV_IP` | `192.168.1.238` |
+| `XIAOMI_TV_MAC` | `50:e4:78:af:b2:e7` |
+| `MANDO_PORT` | `8899` |
+| `LG_CONFIG` | `~/.config/lg_tv/config.json` |
 
-```bash
-./deploy/deploy.sh usuario@IP_RASPBERRY   # systemd en Linux, LaunchAgent en macOS
+---
+
+## API
+
+### `GET /api/action` — Mando táctil
+| Parámetro | Valores |
+|---|---|
+| `cmd` | `encender`, `apagar`, `vol_up`, `vol_down`, `mute`, `up`, `down`, `left`, `right`, `enter`, `back`, `home`, `play_pause`, `rewind`, `fast_forward`, `noche`, `dia`, `cine`, `juego`, `audio_sharp`, `audio_tv`, `smarttube`, `set_brillo`, `set_volumen` |
+| `target` | `lg` / `xiaomi` / `ambas` |
+| `val` | Valor numérico (para `set_brillo`, `set_volumen`) |
+
+Responde `{"ok": true, "mensaje": "Volumen +"}` en < 15ms.
+
+### `GET /api/siri` — Voz
+| Parámetro | Valores |
+|---|---|
+| `action` | `encender`, `apagar`, `noche`, `dia`, `cine`, `juego`, `vol_up`, `vol_down`, `volumen`, `silenciar`, `pausa`, `retroceder`, `adelantar`, `reproducir`, `audio_sharp`, `audio_tv`, `status` |
+| `target` | `lg` / `xiaomi` / `ambas` |
+| `platform` | `smarttube`, `netflix`, `prime`, `disney`, `spotify`, `youtube` |
+| `q` | Búsqueda (texto) |
+| `val` | Nivel de volumen (0-100) |
+
+Responde `text/plain` en español para que Siri lo hable directamente.
+
+### `GET /api/status` — Estado
+```json
+{
+  "lg_online": true,
+  "xiaomi_online": true,
+  "timer_lg": 3240,
+  "timer_xiaomi": 0
+}
 ```
 
-### Configuración (variables de entorno)
+---
 
-| Variable | Por defecto | Descripción |
+## Troubleshooting rápido
+
+| Síntoma | Causa | Solución |
 |---|---|---|
-| `LG_TV_IP` / `LG_TV_MAC` | `192.168.1.250` | LG webOS |
-| `XIAOMI_TV_IP` / `XIAOMI_TV_MAC` | `192.168.1.238` | Xiaomi Android TV (ADB 5555) |
-| `MANDO_PORT` | `8899` | Puerto HTTP |
-| `LG_CONFIG` | `~/.config/lg_tv/config.json` | Clave de emparejamiento LG |
+| LG no responde | TV apagada (SSAP solo funciona con TV on) | Di "enciende la tele LG" primero |
+| Xiaomi no responde | ADB desconectado | El servidor reconecta solo cada 60s; el cron de la Pi cada 3min |
+| Xiaomi muestra diálogo ADB | Claves no persistidas tras reinicio TV | Aceptar una vez con el mando; ya no volverá mientras la TV no se reinicie |
+| LG pierde emparejamiento | `client_key` caducada | Ver `docs/GUIA_OPERATIVA.md` → "LG pierde el emparejamiento SSAP" |
+| Siri no llega al servidor fuera de casa | IP LAN no alcanzable | Usar IP Tailscale `100.95.199.1:8899` en los atajos |
 
-### Estructura
+Guía completa → [`docs/GUIA_OPERATIVA.md`](docs/GUIA_OPERATIVA.md)
+
+---
+
+## Estructura del proyecto
 
 ```
 mando_tv/
-├── config.py     # IPs, puertos, rutas (env)
-├── wol.py        # Wake-on-LAN
-├── lg.py         # LG webOS (SSAP: teclas, apps, audio, escenas)
-├── xiaomi.py     # Xiaomi (ADB)
+├── server.py     # HTTP server, router /api/action /api/siri /api/status
+├── lg.py         # LG webOS: SSAP WebSocket, modos, timers
+├── xiaomi.py     # Xiaomi Android TV: ADB, modos, timers
+├── streaming.py  # Lanzador SmartTube / Netflix / Prime / Disney+ / Spotify
+├── scenes.py     # Acciones conjuntas (ambas TVs)
 ├── timers.py     # Temporizadores de apagado
-├── scenes.py     # Escenas conjuntas
-├── streaming.py  # Lanzador SmartTube/Netflix/Prime/Disney+/Spotify
-├── status.py     # Diagnóstico
-├── server.py     # HTTP + API + Siri
-├── cli.py        # Línea de comandos
-└── web/          # index.html (mando), siri.html (atajos)
-deploy/deploy.sh  # Despliegue remoto
+├── wol.py        # Wake-on-LAN
+├── cli.py        # CLI de línea de comandos
+├── config.py     # IPs, puertos, rutas (env vars)
+└── web/
+    ├── index.html   # Mando táctil PWA (vintage Hi-Fi, 100dvh, haptic)
+    └── siri.html    # Hub visual de atajos Siri
+deploy/
+└── deploy.sh     # Despliegue remoto → systemd (Linux) / LaunchAgent (macOS)
+docs/
+├── GUIA_OPERATIVA.md   # Uso diario, mantenimiento y troubleshooting
+├── SIRI_GUIDE.md       # Catálogo completo de comandos de voz
+├── PROTOCOLS.md        # Especificaciones técnicas SSAP, ADB, WoL
+└── ARCHITECTURE.md     # Diagrama de topología
 ```
 
-Acceso desde tu iPhone:
-- **Mando táctil móvil:** `http://<IP_LOCAL>:8899`
-- **Hub de Atajos de Siri:** `http://<IP_LOCAL>:8899/siri`
-
 ---
 
-## 💼 Destacado Profesional para LinkedIn
+## Licencia
 
-> **Proyecto: Mando TV & Siri Voice Hub**  
-> *Middleware IoT de alto rendimiento para control domótico unificado de Smart TVs y Equipos de Sonido.*  
->  
-> **Logros Técnicos:**  
-> • Diseñé un backend concurrente en Python reduciendo la latencia táctil de 1.475 ms a **10 ms (150x mejora)**.  
-> • Integré múltiples protocolos de comunicación de hardware: **SSAP sobre WebSockets con JSON-RPC** (LG webOS), **Android Debug Bridge (ADB)** con deep-linking vía Android Intents, conmutación **HDMI eARC / HDMI-CEC** para barras de sonido Sharp y paquetes mágicos **Wake-on-LAN (UDP)**.  
-> • Solucioné el fallo de corte de Wi-Fi en suspensión profunda en hardware Xiaomi mediante manipulación directa de la retroiluminación en firmware (`screen_brightness 0`).  
-> • Diseñé una interfaz móvil PWA responsive *zero-scroll* para iOS con Tailwind CSS, retroalimentación táctil (*Taptic Engine*) y webhooks para control por voz bidireccional mediante **Apple Siri Shortcuts**.  
->  
-> *Stack Tecnológico:* Python, Concurrencia Multi-hilo, WebSockets, ADB, Shell Scripting, IoT Domótica, HDMI-CEC/eARC, Apple Shortcuts, PWA, Tailwind CSS.
-
----
-
-## 📄 Licencia
-
-Distribuido bajo la Licencia MIT. Consulta [LICENSE](LICENSE) para más detalles.
+MIT

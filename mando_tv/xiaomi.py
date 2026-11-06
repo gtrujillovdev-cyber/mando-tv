@@ -63,14 +63,19 @@ def cancelar_temporizador_xiaomi(silencioso: bool = False):
 
 
 def apagar_xiaomi(forzar_apagado_total: bool = False):
-    print(f"{Color.CYAN}[*] Apagando Xiaomi TV (Retroiluminación 0% y Volumen 0%)...{Color.END}")
+    print(f"{Color.CYAN}[*] Apagando Xiaomi TV (pantalla off, Wi-Fi activo)...{Color.END}")
     cancelar_temporizador_xiaomi(silencioso=True)
     if forzar_apagado_total:
         ejecutar_adb_xiaomi("input keyevent 26")
-        print(f"{Color.YELLOW}[!] Xiaomi TV: Apagado profundo total.{Color.END}")
+        print(f"{Color.YELLOW}[!] Xiaomi TV: Apagado profundo total (Wi-Fi cortado).{Color.END}")
     else:
-        # Modo Reposo Solicitado: Pausar vídeo, volumen a 0, pantalla a 0% de retroiluminación manteniendo Wi-Fi
+        # Soft-standby: pantalla negra pero sistema despierto y Wi-Fi activo.
+        # - stay_on_while_plugged_in 7 → nunca suspende mientras la TV está enchufada (AC+USB+wireless)
+        # - wifi_sleep_policy 2        → Wi-Fi nunca duerme
+        # - backlight/brightness 0     → pantalla visualmente apagada sin invocar KEYCODE_SLEEP
         cmd = (
+            "settings put global stay_on_while_plugged_in 7; "
+            "settings put global wifi_sleep_policy 2; "
             "input keyevent 85 2>/dev/null; "
             "settings put global picture_backlight 0; "
             "settings put system screen_brightness 0; "
@@ -79,7 +84,7 @@ def apagar_xiaomi(forzar_apagado_total: bool = False):
             "input keyevent 3"
         )
         ejecutar_adb_xiaomi(cmd)
-        print(f"{Color.GREEN}[✓] Xiaomi TV: En reposo (Retroiluminación al 0%, Volumen al 0% y Wi-Fi activo).{Color.END}")
+        print(f"{Color.GREEN}[✓] Xiaomi TV: Pantalla apagada, Wi-Fi y ADB activos.{Color.END}")
 
 
 def xiaomi_noche(minutos: float = 90.0):

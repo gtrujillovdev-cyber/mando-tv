@@ -61,10 +61,18 @@ def cancelar_todos_temporizadores():
 # 4. CONTROL DEL MAC M4 (Apagado / Suspensión)
 # ==============================================================================
 def apagar_m4():
+    import platform
+    if platform.system() != "Darwin":
+        print(f"{Color.YELLOW}[!] apagar_m4() solo funciona en macOS (sistema actual: {platform.system()}).{Color.END}")
+        return
     print(f"{Color.RED}[!] Apagando Mac M4...{Color.END}")
     subprocess.run("osascript -e 'tell app \"System Events\" to shut down'", shell=True)
 
 
 def dormir_m4():
+    import platform
+    if platform.system() != "Darwin":
+        print(f"{Color.YELLOW}[!] dormir_m4() solo funciona en macOS (sistema actual: {platform.system()}).{Color.END}")
+        return
     print(f"{Color.CYAN}[*] Poniendo Mac M4 en reposo inmediato...{Color.END}")
     subprocess.run("pmset sleepnow", shell=True)

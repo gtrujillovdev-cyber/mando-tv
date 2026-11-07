@@ -1,10 +1,17 @@
 """Lanzador de contenido (SmartTube, Netflix, Prime, Disney+, Spotify...)."""
 from . import lg
 from . import xiaomi
-import asyncio
+import socket
 import urllib.parse
+from .config import IP_LG, IP_XIAOMI
 from .lg import encender_lg
 from .xiaomi import encender_xiaomi
+
+
+def _is_online(ip: str, port: int, timeout: float = 0.5) -> bool:
+    with socket.socket() as s:
+        s.settimeout(timeout)
+        return s.connect_ex((ip, port)) == 0
 
 
 def reproducir_streaming(query: str, plataforma: str = "smarttube", target: str = "xiaomi") -> str:
@@ -22,7 +29,10 @@ def reproducir_streaming(query: str, plataforma: str = "smarttube", target: str 
 
     # 1. XIAOMI TV (Android TV Intents)
     if target in ["xiaomi", "ambas"]:
-        encender_xiaomi()
+        if not _is_online(IP_XIAOMI, 5555):
+            encender_xiaomi()
+        else:
+            xiaomi.conectar_adb_xiaomi()
 
         if plataforma == "smarttube":
             if q_clean:
@@ -72,7 +82,8 @@ def reproducir_streaming(query: str, plataforma: str = "smarttube", target: str 
 
     # 2. LG 65" (webOS luna commands)
     if target in ["lg", "ambas"]:
-        encender_lg()
+        if not _is_online(IP_LG, 3000):
+            encender_lg()
         mapping_lg = {
             "smarttube": "youtube.leanback.v4",
             "youtube": "youtube.leanback.v4",
@@ -90,7 +101,7 @@ def reproducir_streaming(query: str, plataforma: str = "smarttube", target: str 
             elif "netflix" in app_id:
                 params["query"] = q_clean
         
-        asyncio.run(lg.enviar_comando_lg("app", {"id": app_id, "params": params, "mensaje": f"Abriendo {nombre_plat}"}))
+        lg.run_lg("app", {"id": app_id, "params": params, "mensaje": f"Abriendo {nombre_plat}"})
 
     if q_clean:
         return f"▶ Buscando '{q_clean}' en {nombre_plat}"

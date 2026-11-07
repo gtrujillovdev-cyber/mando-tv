@@ -92,6 +92,7 @@ class _Sesion:
     def __init__(self):
         self.ws = None
         self.ptr = None
+        self.ptr_t = 0.0
         self.lock: Optional[asyncio.Lock] = None
 
     async def cerrar(self):
@@ -106,7 +107,7 @@ class _Sesion:
     async def conectar(self):
         import websockets
         cfg = cargar_config_lg()
-        ws = await websockets.connect(f"ws://{cfg.get('ip', IP_LG)}:3000/", ping_interval=None, open_timeout=3.0)
+        ws = await websockets.connect(f"ws://{cfg.get('ip', IP_LG)}:3000/", ping_interval=10, ping_timeout=5, open_timeout=3.0)
         await ws.send(json.dumps({"type": "register", "id": "reg", "payload": {
             "forcePairing": False, "pairingType": "PROMPT",
             "client-key": cfg.get("client_key"), "manifest": MANIFEST}}))
@@ -119,7 +120,7 @@ class _Sesion:
                 raise RuntimeError(msg.get("error"))
         self.ws = ws
 
-    async def req(self, uri: str, payload: Optional[Dict] = None, timeout: float = 5.0) -> Dict:
+    async def req(self, uri: str, payload: Optional[Dict] = None, timeout: float = 3.0) -> Dict:
         if self.ws is None:
             await self.conectar()
         rid = uuid.uuid4().hex[:8]
@@ -134,6 +135,14 @@ class _Sesion:
 
     async def boton(self, nombre: str):
         import websockets
+        # El socket de puntero se renueva si lleva inactivo: tras abrir apps/mirroring la LG
+        # lo descarta sin avisar y las escrituras se pierden en silencio.
+        if self.ptr is not None and time.time() - self.ptr_t > 8:
+            try:
+                await self.ptr.close()
+            except Exception:
+                pass
+            self.ptr = None
         if self.ptr is None:
             r = await self.req("ssap://com.webos.service.networkinput/getPointerInputSocket")
             sock = r.get("payload", {}).get("socketPath")
@@ -141,9 +150,23 @@ class _Sesion:
                 raise RuntimeError(r.get("error") or "sin socket de puntero")
             self.ptr = await websockets.connect(sock, ping_interval=None, open_timeout=3.0)
         await self.ptr.send(f"type:button\nname:{nombre}\n\n")
+        self.ptr_t = time.time()
 
 
 _sesion = _Sesion()
+
+
+def run_lg(accion: str, payload: Optional[Dict] = None) -> bool:
+    """Helper síncrono: despacha a _loop_bg sin crear event loop temporal."""
+    p = payload or {}
+    fut = asyncio.run_coroutine_threadsafe(
+        _con_reintento(lambda: _ejecutar(accion, p)), _loop()
+    )
+    try:
+        return fut.result(timeout=8.0)
+    except Exception as e:
+        print(f"{Color.YELLOW}[!] LG 65\" ({IP_LG}): {accion} falló: {type(e).__name__} {e}{Color.END}")
+        return False
 
 
 async def _con_reintento(fn):
@@ -232,7 +255,7 @@ async def enviar_comando_lg(accion: str, payload_extra: Optional[Dict] = None) -
     try:
         return await asyncio.wrap_future(fut)
     except Exception as e:
-        print(f"{Color.YELLOW}[!] LG 65\" ({IP_LG}): {accion} falló: {e}{Color.END}")
+        print(f"{Color.YELLOW}[!] LG 65\" ({IP_LG}): {accion} falló: {type(e).__name__} {e}{Color.END}")
         return False
 
 
@@ -269,7 +292,7 @@ def cancelar_temporizador_lg(silencioso: bool = False):
                 subprocess.run(f"pkill -P {pid} 2>/dev/null; kill -9 {pid} 2>/dev/null", shell=True)
             os.remove(TIMER_FILE_LG)
             if not silencioso:
-                asyncio.run(enviar_comando_lg("toast", {"mensaje": "⏱️ Temporizador de apagado LG: CANCELADO"}))
+                run_lg("toast", {"mensaje": "⏱️ Temporizador de apagado LG: CANCELADO"})
                 print(f"{Color.GREEN}[✓] LG 65\": Temporizador de apagado cancelado.{Color.END}")
         except Exception:
             pass
@@ -280,7 +303,7 @@ def cancelar_temporizador_lg(silencioso: bool = False):
 def apagar_lg():
     print(f"{Color.CYAN}[*] Apagando LG 65\" ({IP_LG})...{Color.END}")
     cancelar_temporizador_lg(silencioso=True)
-    asyncio.run(enviar_comando_lg("apagar"))
+    run_lg("apagar")
 
 
 def lg_noche(minutos: float = 90.0):
@@ -288,7 +311,7 @@ def lg_noche(minutos: float = 90.0):
     print(f"  • Retroiluminación: {Color.CYAN}6%{Color.END}")
     print(f"  • Temporizador de apagado: {Color.CYAN}{minutos} minutos ({minutos/60:.1f}h){Color.END}")
 
-    asyncio.run(enviar_comando_lg("ajustes", {
+    run_lg("ajustes", {
         "category": "picture",
         "settings": {
             "backlight": "6",
@@ -296,17 +319,17 @@ def lg_noche(minutos: float = 90.0):
             "energySaving": "min"
         },
         "mensaje": f"🌙 Modo Noche: Retroiluminación al 6% | Temporizador {minutos}m"
-    }))
-    asyncio.run(enviar_comando_lg("toast", {
+    })
+    run_lg("toast", {
         "mensaje": f"🌙 Modo Noche LG: Retroiluminación 6% | Apagado automático en {int(minutos)}m"
-    }))
+    })
     programar_temporizador_lg(minutos)
     print(f"{Color.GREEN}[✓] LG 65\": Retroiluminación reducida al 6% y temporizador de {minutos}m activado.{Color.END}\n")
 
 
 def lg_dia():
     print(f"\n{Color.BOLD}☀️ [LG 65\"] ACTIVANDO MODO DÍA...{Color.END}")
-    asyncio.run(enviar_comando_lg("ajustes", {
+    run_lg("ajustes", {
         "category": "picture",
         "settings": {
             "backlight": "100",
@@ -315,14 +338,14 @@ def lg_dia():
             "energySaving": "off"
         },
         "mensaje": "☀️ Modo Día: Brillo máximo (100%)"
-    }))
-    asyncio.run(enviar_comando_lg("toast", {"mensaje": "☀️ Modo Día LG: Brillo al 100% para máxima claridad"}))
+    })
+    run_lg("toast", {"mensaje": "☀️ Modo Día LG: Brillo al 100% para máxima claridad"})
     print(f"{Color.GREEN}[✓] LG 65\": Brillo al 100%, contraste 95% y ahorro de energía desactivado.{Color.END}\n")
 
 
 def lg_cine():
     print(f"\n{Color.BOLD}🎬 [LG 65\"] ACTIVANDO MODO CINE (FILMMAKER MODE D65)...{Color.END}")
-    asyncio.run(enviar_comando_lg("ajustes", {
+    run_lg("ajustes", {
         "category": "picture",
         "settings": {
             "pictureMode": "filmMaker",
@@ -330,14 +353,14 @@ def lg_cine():
             "truMotion": "off"
         },
         "mensaje": "🎬 Modo Cine: Filmmaker Mode D65 activo"
-    }))
-    asyncio.run(enviar_comando_lg("toast", {"mensaje": "🎬 Modo Cine LG: Filmmaker Mode ON | 24fps puras | TruMotion OFF"}))
+    })
+    run_lg("toast", {"mensaje": "🎬 Modo Cine LG: Filmmaker Mode ON | 24fps puras | TruMotion OFF"})
     print(f"{Color.GREEN}[✓] LG 65\": Filmmaker Mode activo (colores D65 de director, sin suavizado artificial).{Color.END}\n")
 
 
 def lg_juego():
     print(f"\n{Color.BOLD}🎮 [LG 65\"] ACTIVANDO MODO JUEGO (LATENCIA MÍNIMA ~9ms)...{Color.END}")
-    asyncio.run(enviar_comando_lg("ajustes", {
+    run_lg("ajustes", {
         "category": "picture",
         "settings": {
             "pictureMode": "game",
@@ -347,14 +370,14 @@ def lg_juego():
             "hdrGameHGiG": "on"
         },
         "mensaje": "🎮 Modo Juego: Game Optimizer ON | ALLM ON | HGiG ON"
-    }))
-    asyncio.run(enviar_comando_lg("toast", {"mensaje": "🎮 Modo Juego LG: Input Lag ~9ms | ALLM ON | HGiG ON"}))
+    })
+    run_lg("toast", {"mensaje": "🎮 Modo Juego LG: Input Lag ~9ms | ALLM ON | HGiG ON"})
     print(f"{Color.GREEN}[✓] LG 65\": Game Optimizer ON (~9ms lag, ALLM para consolas/PC, HGiG calibrado).{Color.END}\n")
 
 
 def lg_descanso():
     print(f"\n{Color.BOLD}👁️ [LG 65\"] ACTIVANDO MODO DESCANSO VISUAL (CONFORT OCULAR)...{Color.END}")
-    asyncio.run(enviar_comando_lg("ajustes", {
+    run_lg("ajustes", {
         "category": "picture",
         "settings": {
             "backlight": "30",
@@ -363,20 +386,20 @@ def lg_descanso():
             "energySaving": "med"
         },
         "mensaje": "👁️ Confort Ocular: Temperatura Cálida (Warm 50) | Filtro Azul"
-    }))
-    asyncio.run(enviar_comando_lg("toast", {"mensaje": "👁️ Confort Ocular LG: Filtro de luz azul activado (Warm 50)"}))
+    })
+    run_lg("toast", {"mensaje": "👁️ Confort Ocular LG: Filtro de luz azul activado (Warm 50)"})
     print(f"{Color.GREEN}[✓] LG 65\": Modo Descanso Visual activado (filtra luz azul y relaja la vista).{Color.END}\n")
 
 
 def lg_solo_audio():
     print(f"\n{Color.BOLD}📻 [LG 65\"] ACTIVANDO MODO SOLO AUDIO...{Color.END}")
-    asyncio.run(enviar_comando_lg("solo_audio"))
+    run_lg("solo_audio")
 
 
 def lg_volumen(nivel: int):
     nivel = max(0, min(100, nivel))
-    asyncio.run(enviar_comando_lg("volumen", {"volumen": nivel}))
+    run_lg("volumen", {"volumen": nivel})
 
 
 def lg_mute():
-    asyncio.run(enviar_comando_lg("mute", {"mute": True}))
+    run_lg("mute", {"mute": True})

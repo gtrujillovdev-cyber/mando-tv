@@ -6,8 +6,8 @@ from . import timers
 from . import xiaomi
 import socketserver
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import asyncio
 import json
 import os
 import socket
@@ -47,7 +47,7 @@ class MandoHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.end_headers()
                 host = self.headers.get("Host") or "localhost"
-                self.wfile.write(_leer_web("siri.html").replace(b"192.168.1.205:8899", host.encode()))
+                self.wfile.write(_leer_web("siri.html").replace(b"__HOST__", host.encode()))
 
             elif url.path == "/api/status":
                 self.send_response(200)
@@ -81,7 +81,7 @@ class MandoHandler(BaseHTTPRequestHandler):
                     "play_pause": "Play / Pausa", "rewind": "⏪ -10s", "fast_forward": "⏩ +10s",
                     "back": "↩ Atrás", "home": "🏠 Inicio", "settings": "⚙️ Ajustes", "info": "ℹ️ Info", "source": "🔌 HDMI",
                     "dia": "☀️ Modo Día (100%)", "noche": "🌙 Modo Noche (6% + 90m)",
-                    "cine": "🎬 Modo Cine", "juego": "🎮 Modo Juego", "solo_audio": "📻 Solo Audio",
+                    "cine": "🎬 Modo Cine", "juego": "🎮 Modo Juego", "descanso": "👁️ Modo Descanso", "solo_audio": "📻 Solo Audio",
                     "encender": "⚡ Encendiendo...", "apagar": "🔌 Apagando...",
                     "set_brillo": f"☀️ Brillo: {val}%", "set_volumen": f"🔊 Vol: {val}%",
                     "smarttube": "📺 SmartTube",
@@ -185,6 +185,14 @@ class MandoHandler(BaseHTTPRequestHandler):
             threading.Thread(target=_j, daemon=True).start()
             return f"Modo Juego de ultra baja latencia activado en {disp_nombre}."
 
+        elif action == "descanso":
+            def _des():
+                if target == "lg": lg.lg_descanso()
+                elif target == "xiaomi": xiaomi.xiaomi_descanso()
+                else: scenes.modo_descanso()
+            threading.Thread(target=_des, daemon=True).start()
+            return f"Modo Descanso Visual activado en {disp_nombre}."
+
         elif action == "encender":
             def _e():
                 if target in ["lg", "ambas"]: encender_lg()
@@ -221,42 +229,42 @@ class MandoHandler(BaseHTTPRequestHandler):
 
         elif action in ["play", "play_pause", "pausa"]:
             def _pp():
-                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "PLAY"}))
+                if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "PLAY"})
                 if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 85")
             threading.Thread(target=_pp, daemon=True).start()
             return "Reproducción alternada."
 
         elif action in ["retroceder", "rewind"]:
             def _rw():
-                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "REWIND"}))
+                if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "REWIND"})
                 if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 89")
             threading.Thread(target=_rw, daemon=True).start()
             return f"Retrocediendo 10 segundos en {disp_nombre}."
 
         elif action in ["adelantar", "fastforward"]:
             def _ff():
-                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "FASTFORWARD"}))
+                if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "FASTFORWARD"})
                 if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 90")
             threading.Thread(target=_ff, daemon=True).start()
             return f"Avanzando 10 segundos en {disp_nombre}."
 
         elif action == "vol_up":
             def _vu():
-                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("vol_up", {}))
+                if target in ["lg", "ambas"]: lg.run_lg("vol_up", {})
                 if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 24")
             threading.Thread(target=_vu, daemon=True).start()
             return f"Subiendo volumen de {disp_nombre}."
 
         elif action == "vol_down":
             def _vd():
-                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("vol_down", {}))
+                if target in ["lg", "ambas"]: lg.run_lg("vol_down", {})
                 if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 25")
             threading.Thread(target=_vd, daemon=True).start()
             return f"Bajando volumen de {disp_nombre}."
 
         elif action == "audio_tv":
             def _at():
-                if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("audio_output", {"output": "tv_speaker"}))
+                if target in ["lg", "ambas"]: lg.run_lg("audio_output", {"output": "tv_speaker"})
             threading.Thread(target=_at, daemon=True).start()
             return "Audio cambiado a los altavoces de la televisión LG."
 
@@ -304,10 +312,10 @@ class MandoHandler(BaseHTTPRequestHandler):
             if target in ["xiaomi", "ambas"]:
                 xiaomi.ejecutar_adb_xiaomi(f"settings put global picture_backlight {v}")
             if target in ["lg", "ambas"]:
-                asyncio.run(lg.enviar_comando_lg("ajustes", {
+                lg.run_lg("ajustes", {
                     "category": "picture", "settings": {"backlight": str(v)},
                     "mensaje": f"Retroiluminación: {v}%"
-                }))
+                })
             return f"☀️ Retroiluminación: {v}%"
 
         elif cmd == "set_volumen":
@@ -319,9 +327,11 @@ class MandoHandler(BaseHTTPRequestHandler):
 
         # 4. MODOS DE IMAGEN & SUEÑO
         elif cmd == "noche":
-            if target == "lg": lg.lg_noche(90); return "🌙 LG: Modo Noche (6% + 1.5h)"
-            elif target == "xiaomi": xiaomi.xiaomi_noche(90); return "🌙 Xiaomi: Modo Noche (6% + 1.5h)"
-            else: scenes.modo_noche(90); return "🌙 Ambas: Modo Noche (6% + 1.5h)"
+            try: mins = max(10.0, min(360.0, float(val)))
+            except (ValueError, TypeError): mins = 90.0
+            if target == "lg": lg.lg_noche(mins); return f"🌙 LG: Modo Noche (6% + {int(mins)}m)"
+            elif target == "xiaomi": xiaomi.xiaomi_noche(mins); return f"🌙 Xiaomi: Modo Noche (6% + {int(mins)}m)"
+            else: scenes.modo_noche(mins); return f"🌙 Ambas: Modo Noche (6% + {int(mins)}m)"
 
         elif cmd == "cine":
             if target == "lg": lg.lg_cine(); return "🎬 LG: Filmmaker Mode D65"
@@ -333,6 +343,11 @@ class MandoHandler(BaseHTTPRequestHandler):
             elif target == "xiaomi": xiaomi.xiaomi_juego(); return "🎮 Xiaomi: Modo Juego"
             else: scenes.modo_juego(); return "🎮 Ambas: Modo Juego"
 
+        elif cmd == "descanso":
+            if target == "lg": lg.lg_descanso(); return "👁️ LG: Modo Descanso Visual"
+            elif target == "xiaomi": xiaomi.xiaomi_descanso(); return "👁️ Xiaomi: Modo Descanso Visual"
+            else: scenes.modo_descanso(); return "👁️ Ambas: Modo Descanso Visual"
+
         elif cmd == "dia":
             if target == "lg": lg.lg_dia(); return "☀️ LG: Modo Día (100%)"
             elif target == "xiaomi": xiaomi.xiaomi_dia(); return "☀️ Xiaomi: Modo Día (100%)"
@@ -343,11 +358,11 @@ class MandoHandler(BaseHTTPRequestHandler):
             return "📻 Solo Audio activado"
 
         elif cmd == "audio_sharp":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("audio_output", {"output": "external_arc"}))
+            if target in ["lg", "ambas"]: lg.run_lg("audio_output", {"output": "external_arc"})
             return "📢 Audio: Barra Sharp (HDMI ARC)"
 
         elif cmd == "audio_tv":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("audio_output", {"output": "tv_speaker"}))
+            if target in ["lg", "ambas"]: lg.run_lg("audio_output", {"output": "tv_speaker"})
             return "📺 Audio: Altavoces TV"
 
         elif cmd == "cancelar_timer":
@@ -362,26 +377,26 @@ class MandoHandler(BaseHTTPRequestHandler):
             mapping_xm = {"up": "19", "down": "20", "left": "21", "right": "22", "enter": "23"}
 
             if target in ["lg", "ambas"]:
-                asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": mapping_lg[cmd]}))
+                lg.run_lg("tecla", {"tecla": mapping_lg[cmd]})
             if target in ["xiaomi", "ambas"]:
                 xiaomi.ejecutar_adb_xiaomi(f"input keyevent {mapping_xm[cmd]}")
             return f"Tecla: {cmd.upper()}"
 
         # 6. ROCKER DE VOLUMEN & CANALES (CH)
         elif cmd == "vol_up":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("vol_up", {}))
+            if target in ["lg", "ambas"]: lg.run_lg("vol_up", {})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 24")
             return "Volumen +"
         elif cmd == "vol_down":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("vol_down", {}))
+            if target in ["lg", "ambas"]: lg.run_lg("vol_down", {})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 25")
             return "Volumen -"
         elif cmd == "ch_up":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "CHANNELUP"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "CHANNELUP"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 166")
             return "Canal +"
         elif cmd == "ch_down":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "CHANNELDOWN"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "CHANNELDOWN"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 167")
             return "Canal -"
         elif cmd == "mute":
@@ -391,37 +406,37 @@ class MandoHandler(BaseHTTPRequestHandler):
 
         # 7. CONTROLES DE REPRODUCCIÓN (PLAYBACK)
         elif cmd == "play_pause":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "PLAY"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "PLAY"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 85")
             return "Play / Pausa"
         elif cmd == "rewind":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "REWIND"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "REWIND"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 89")
             return "Rebobinar -10s"
         elif cmd == "fast_forward":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "FASTFORWARD"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "FASTFORWARD"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 90")
             return "Avanzar +10s"
 
         # 8. TECLAS DE SISTEMA (HOME, ATRÁS, AJUSTES, SOURCE, INFO)
         elif cmd == "back":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "BACK"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "BACK"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 4")
             return "Atrás"
         elif cmd == "home":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "HOME"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "HOME"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 3")
             return "Inicio (Home)"
         elif cmd == "settings":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "MENU"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "MENU"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 176 || input keyevent 82")
             return "Ajustes"
         elif cmd == "source":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "INPUT"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "INPUT"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 178")
             return "Entrada HDMI / Source"
         elif cmd == "info":
-            if target in ["lg", "ambas"]: asyncio.run(lg.enviar_comando_lg("tecla", {"tecla": "INFO"}))
+            if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "INFO"})
             if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 165")
             return "Info"
 
@@ -445,7 +460,7 @@ def _ip_local() -> str:
 def _adb_keepalive():
     """Mantiene la conexión ADB con la Xiaomi viva en segundo plano."""
     while True:
-        threading.Event().wait(60)
+        time.sleep(60)
         xiaomi.conectar_adb_xiaomi()
 
 

@@ -31,8 +31,10 @@ def conectar_adb_xiaomi() -> bool:
 
 def ejecutar_adb_xiaomi(comando_shell: str):
     conectar_adb_xiaomi()
-    cmd = f"adb -s {IP_XIAOMI}:5555 shell \"{comando_shell}\""
-    return subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return subprocess.run(
+        ["adb", "-s", f"{IP_XIAOMI}:5555", "shell", comando_shell],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
 
 
 def programar_temporizador_xiaomi(minutos: float = 90.0):

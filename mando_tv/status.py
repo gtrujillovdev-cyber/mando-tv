@@ -1,10 +1,9 @@
 """Diagnóstico de estado."""
-import asyncio
 import os
 import socket
 import time
 from .config import Color, IP_LG, IP_XIAOMI, TIMER_FILE_LG
-from .lg import enviar_comando_lg
+from .lg import run_lg
 from .xiaomi import ejecutar_adb_xiaomi
 
 
@@ -21,7 +20,7 @@ def estado_sistema():
 
     print(f"{Color.BOLD}📺 LG 65\" ({IP_LG}):{Color.END}")
     if lg_online:
-        app_activa = asyncio.run(enviar_comando_lg("status")) or "Encendida"
+        app_activa = run_lg("status") or "Encendida"
         print(f"  • Estado: {Color.GREEN}🟢 ENCENDIDA / ONLINE{Color.END}")
         print(f"  • App en primer plano: {Color.CYAN}{app_activa}{Color.END}")
     else:

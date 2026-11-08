@@ -11,8 +11,38 @@ from .config import Color, IP_LG, LG_CONFIG_PATH, MAC_LG, ROOT_DIR, TIMER_FILE_L
 from .wol import enviar_wol
 
 
+_wol_ts = 0.0
+BOOT_SEGUNDOS = 60  # tiempo máximo que se considera "arrancando" tras un WoL
+
+
+def puerto_abierto(ip: str, puerto: int, timeout: float = 0.3) -> bool:
+    import socket
+    with socket.socket() as s:
+        s.settimeout(timeout)
+        return s.connect_ex((ip, puerto)) == 0
+
+
+def estado_lg() -> str:
+    """'on' (SSAP accesible), 'booting' (WoL reciente sin respuesta aún) o 'standby'."""
+    if puerto_abierto(IP_LG, 3000):
+        return "on"
+    return "booting" if time.time() - _wol_ts < BOOT_SEGUNDOS else "standby"
+
+
+def esperar_lg(timeout: float = 45.0) -> bool:
+    """Bloquea hasta que la LG acepte conexiones SSAP (tras encenderla por WoL)."""
+    fin = time.time() + timeout
+    while time.time() < fin:
+        if puerto_abierto(IP_LG, 3000):
+            return True
+        time.sleep(0.5)
+    return False
+
+
 def encender_lg() -> bool:
     """Despierta la televisión LG 65\" webOS mediante Wake-on-LAN."""
+    global _wol_ts
+    _wol_ts = time.time()
     print(f"{Color.CYAN}[*] Enviando señal Wake-on-LAN a LG 65\" ({MAC_LG} / {IP_LG})...{Color.END}")
     ok = enviar_wol(MAC_LG)
     if ok:

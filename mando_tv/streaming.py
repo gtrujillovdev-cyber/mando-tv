@@ -4,7 +4,7 @@ from . import xiaomi
 import socket
 import urllib.parse
 from .config import IP_LG, IP_XIAOMI
-from .lg import encender_lg
+from .lg import encender_lg, esperar_lg
 from .xiaomi import encender_xiaomi
 
 
@@ -84,6 +84,8 @@ def reproducir_streaming(query: str, plataforma: str = "smarttube", target: str 
     if target in ["lg", "ambas"]:
         if not _is_online(IP_LG, 3000):
             encender_lg()
+            if not esperar_lg(45):
+                return "La LG no ha arrancado (revisa 'Encender con Wi-Fi' en la tele)"
         mapping_lg = {
             "smarttube": "youtube.leanback.v4",
             "youtube": "youtube.leanback.v4",

@@ -619,7 +619,10 @@
       const url = '/api/action?cmd=' + encodeURIComponent(cmd) + '&target=' + encodeURIComponent(dispositivoActual) + '&val=' + encodeURIComponent(val);
       const res = await fetch(url);
       const data = await res.json();
-      if (data.ok && data.mensaje) {
+      if (data.ok === false) {
+        actualizarStatus('⚠ ' + (data.mensaje || 'ERROR'));
+        if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+      } else if (data.mensaje) {
         actualizarStatus(data.mensaje);
       }
       setTimeout(sincronizarEstadoServidor, 600);
@@ -692,10 +695,25 @@
       const minRest = secRest > 0 ? Math.max(1, Math.round(secRest / 60)) : 0;
       timerActualMinutos = minRest;
 
+      const estilo = (st) => 'inline-block w-1.5 h-1.5 rounded-full ' +
+        (st === 'on' ? 'bg-emerald-400' : st === 'booting' ? 'bg-amber-400 animate-pulse' : 'bg-slate-600');
+      const lgSt = data.lg_state || (data.lg_online ? 'on' : 'standby');
+      const xmSt = data.xiaomi_state || (data.xiaomi_online ? 'on' : 'standby');
       const lgDot = document.getElementById('dot-lg');
       const xmDot = document.getElementById('dot-xiaomi');
-      if (lgDot) lgDot.className = 'inline-block w-1.5 h-1.5 rounded-full ' + (data.lg_online ? 'bg-emerald-400' : 'bg-slate-600');
-      if (xmDot) xmDot.className = 'inline-block w-1.5 h-1.5 rounded-full ' + (data.xiaomi_online ? 'bg-emerald-400' : 'bg-slate-600');
+      if (lgDot) lgDot.className = estilo(lgSt);
+      if (xmDot) xmDot.className = estilo(xmSt);
+
+      // Estado real de la tele seleccionada en el LCD
+      const etiqueta = {on: 'ON', booting: 'ARRANCANDO', standby: 'STANDBY'};
+      const sel = dispositivoActual === 'lg' ? [['LG 65"', lgSt]]
+                : dispositivoActual === 'xiaomi' ? [['XIAOMI', xmSt]]
+                : [['LG', lgSt], ['XM', xmSt]];
+      const txt = 'TV: ' + sel.map(([n, st]) => n + ' ' + etiqueta[st]).join(' | ');
+      const lcd = document.getElementById('lcdTarget');
+      lcd.textContent = txt;
+      const hayOn = sel.some(([, st]) => st === 'on');
+      lcd.className = 'font-bold ' + (hayOn ? 'text-emerald-300' : sel.some(([, st]) => st === 'booting') ? 'text-amber-300 animate-pulse' : 'text-slate-500');
 
       const lcdTimer = document.getElementById('lcdTimer');
       if (minRest > 0) {

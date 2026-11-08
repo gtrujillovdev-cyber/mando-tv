@@ -54,14 +54,13 @@ class MandoHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 
-                s_lg = socket.socket(); s_lg.settimeout(0.12)
-                lg_on = (s_lg.connect_ex((config.IP_LG, 3000)) == 0); s_lg.close()
-                s_xm = socket.socket(); s_xm.settimeout(0.12)
-                xm_on = (s_xm.connect_ex((config.IP_XIAOMI, 5555)) == 0); s_xm.close()
-
+                lg_st = lg.estado_lg()
+                xm_on = lg.puerto_abierto(config.IP_XIAOMI, 5555)
                 data = {
-                    "lg_online": lg_on,
+                    "lg_online": lg_st == "on",
+                    "lg_state": lg_st,
                     "xiaomi_online": xm_on,
+                    "xiaomi_state": "on" if xm_on else "standby",
                     "timer_lg": timers.obtener_tiempo_restante_timer("lg"),
                     "timer_xiaomi": timers.obtener_tiempo_restante_timer("xiaomi")
                 }
@@ -88,6 +87,22 @@ class MandoHandler(BaseHTTPRequestHandler):
                     "audio_sharp": "📢 Barra Sharp (ARC)", "audio_tv": "📺 Altavoces TV"
                 }
                 mensaje = labels.get(cmd, f"{cmd.upper()}")
+
+                # Si la tele destino no está encendida, avisar en vez de fingir éxito.
+                if cmd not in ("encender", "cancelar_timer"):
+                    estados = []
+                    if target in ("lg", "ambas"):
+                        estados.append(("LG", lg.estado_lg()))
+                    if target in ("xiaomi", "ambas"):
+                        estados.append(("XIAOMI", "on" if lg.puerto_abierto(config.IP_XIAOMI, 5555) else "standby"))
+                    if estados and not any(st == "on" for _, st in estados):
+                        nombre, st = estados[0]
+                        msg = f"{nombre} ARRANCANDO..." if st == "booting" else f"{nombre} APAGADA · PULSA ON"
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"ok": False, "mensaje": msg}).encode("utf-8"))
+                        return
 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")

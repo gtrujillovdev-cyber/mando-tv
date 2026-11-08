@@ -289,11 +289,11 @@
 <div class="retro-chassis">
 
   <!-- 1. PANTALLA LCD RETRO DE ESTADO SUPERIOR (7-SEGMENT PHOSPHOR GLOW) -->
-  <div class="retro-lcd px-2.5 py-1 flex items-center justify-between text-[10px] tracking-wider flex-shrink-0">
+  <div class="retro-lcd px-2.5 py-1.5 flex items-center justify-between text-[10px] tracking-wider flex-shrink-0 font-mono">
     <div class="flex items-center gap-2">
-      <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span id="lcdTarget" class="font-bold text-emerald-300">TV: XIAOMI</span>
-      <span class="text-emerald-700">|</span>
+      <span id="lcdPwrDot" class="inline-block w-2 h-2 rounded-full bg-slate-600 transition-all"></span>
+      <span id="lcdTarget" class="font-bold text-slate-400">TV: LG 65" · STANDBY</span>
+      <span class="text-emerald-900/60">|</span>
       <span id="lcdAudio" class="text-emerald-400">ARC: SHARP</span>
     </div>
     <div class="flex items-center gap-2">
@@ -304,23 +304,27 @@
 
   <!-- 2. CABECERA: PWR ON | SELECTOR MULTI-TV TIPO TOGGLE | PWR OFF -->
   <div class="flex items-center justify-between gap-1.5 flex-shrink-0">
-    <button onclick="solicitarEncendido()" title="Encender TV" class="btn-power-on px-3.5 h-9 rounded-xl text-white flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-transform shadow">
+    <button id="btnPowerOn" onclick="solicitarEncendido()" title="Encender TV" class="btn-power-on px-3.5 h-9 rounded-xl text-white flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-all shadow">
       <span>⚡</span> <span>ON</span>
     </button>
 
     <div class="flex-1 flex retro-selector-bar p-1 gap-1">
-      <button onclick="setDispositivo('xiaomi')" id="tab-xiaomi" class="retro-tab active flex-1 py-1.5 text-[11px] font-bold flex items-center justify-center gap-1">
-        <span id="dot-xiaomi" class="inline-block w-1.5 h-1.5 rounded-full bg-slate-600"></span>Xiaomi
+      <button onclick="setDispositivo('xiaomi')" id="tab-xiaomi" class="retro-tab active flex-1 py-1.5 text-[11px] font-bold flex items-center justify-center gap-1.5">
+        <span id="dot-xiaomi" class="inline-block w-2 h-2 rounded-full bg-slate-600 transition-all duration-300"></span>
+        <span>Xiaomi</span>
+        <span id="badge-xiaomi" class="text-[8.5px] px-1 py-0.5 rounded bg-slate-800 text-slate-400 font-mono font-semibold">OFF</span>
       </button>
-      <button onclick="setDispositivo('lg')" id="tab-lg" class="retro-tab flex-1 py-1.5 text-[11px] font-bold flex items-center justify-center gap-1">
-        <span id="dot-lg" class="inline-block w-1.5 h-1.5 rounded-full bg-slate-600"></span>LG 65"
+      <button onclick="setDispositivo('lg')" id="tab-lg" class="retro-tab flex-1 py-1.5 text-[11px] font-bold flex items-center justify-center gap-1.5">
+        <span id="dot-lg" class="inline-block w-2 h-2 rounded-full bg-slate-600 transition-all duration-300"></span>
+        <span>LG 65"</span>
+        <span id="badge-lg" class="text-[8.5px] px-1 py-0.5 rounded bg-slate-800 text-slate-400 font-mono font-semibold">OFF</span>
       </button>
       <button onclick="setDispositivo('ambas')" id="tab-ambas" class="retro-tab flex-1 py-1.5 text-[11px] font-bold">
         Ambas
       </button>
     </div>
 
-    <button onclick="solicitarApagado()" title="Apagar TV" class="btn-power-off px-3.5 h-9 rounded-xl text-white flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-transform shadow">
+    <button id="btnPowerOff" onclick="solicitarApagado()" title="Apagar TV" class="btn-power-off px-3.5 h-9 rounded-xl text-white flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-all shadow">
       <span>⏻</span> <span>OFF</span>
     </button>
   </div>
@@ -558,10 +562,11 @@
     dispositivoActual = target; localStorage.setItem('mando_target', target);
     ['xiaomi', 'lg', 'ambas'].forEach(t => {
       const el = document.getElementById('tab-' + t);
+      if (!el) return;
       if (t === target) {
-        el.className = 'retro-tab active flex-1 py-1.5 text-[11px] font-bold';
+        el.className = 'retro-tab active flex-1 py-1.5 text-[11px] font-bold flex items-center justify-center gap-1.5';
       } else {
-        el.className = 'retro-tab flex-1 py-1.5 text-[11px] font-bold';
+        el.className = 'retro-tab flex-1 py-1.5 text-[11px] font-bold flex items-center justify-center gap-1.5';
       }
     });
 
@@ -621,7 +626,12 @@
       const data = await res.json();
       if (data.ok === false) {
         actualizarStatus('⚠ ' + (data.mensaje || 'ERROR'));
-        if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        if (navigator.vibrate) navigator.vibrate([70, 40, 70]);
+        const btnOn = document.getElementById('btnPowerOn');
+        if (btnOn) {
+          btnOn.classList.add('ring-4', 'ring-amber-400', 'animate-pulse');
+          setTimeout(() => btnOn.classList.remove('ring-4', 'ring-amber-400', 'animate-pulse'), 2500);
+        }
       } else if (data.mensaje) {
         actualizarStatus(data.mensaje);
       }
@@ -695,25 +705,47 @@
       const minRest = secRest > 0 ? Math.max(1, Math.round(secRest / 60)) : 0;
       timerActualMinutos = minRest;
 
-      const estilo = (st) => 'inline-block w-1.5 h-1.5 rounded-full ' +
-        (st === 'on' ? 'bg-emerald-400' : st === 'booting' ? 'bg-amber-400 animate-pulse' : 'bg-slate-600');
+      const estiloDot = (st) => 'inline-block w-2.5 h-2.5 rounded-full transition-all duration-300 ' +
+        (st === 'on' ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : st === 'booting' ? 'bg-amber-400 animate-pulse shadow-[0_0_8px_#fbbf24]' : 'bg-slate-600');
+      const estiloBadge = (st) => 'text-[8.5px] px-1 py-0.5 rounded font-mono font-semibold ' +
+        (st === 'on' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40' : st === 'booting' ? 'bg-amber-950/80 text-amber-300 border border-amber-500/40 animate-pulse' : 'bg-slate-800 text-slate-400');
+      const textoBadge = (st) => (st === 'on' ? 'ON' : st === 'booting' ? 'INIC' : 'OFF');
+
       const lgSt = data.lg_state || (data.lg_online ? 'on' : 'standby');
       const xmSt = data.xiaomi_state || (data.xiaomi_online ? 'on' : 'standby');
+
       const lgDot = document.getElementById('dot-lg');
       const xmDot = document.getElementById('dot-xiaomi');
-      if (lgDot) lgDot.className = estilo(lgSt);
-      if (xmDot) xmDot.className = estilo(xmSt);
+      const lgBadge = document.getElementById('badge-lg');
+      const xmBadge = document.getElementById('badge-xiaomi');
 
-      // Estado real de la tele seleccionada en el LCD
-      const etiqueta = {on: 'ON', booting: 'ARRANCANDO', standby: 'STANDBY'};
-      const sel = dispositivoActual === 'lg' ? [['LG 65"', lgSt]]
-                : dispositivoActual === 'xiaomi' ? [['XIAOMI', xmSt]]
-                : [['LG', lgSt], ['XM', xmSt]];
-      const txt = 'TV: ' + sel.map(([n, st]) => n + ' ' + etiqueta[st]).join(' | ');
-      const lcd = document.getElementById('lcdTarget');
-      lcd.textContent = txt;
-      const hayOn = sel.some(([, st]) => st === 'on');
-      lcd.className = 'font-bold ' + (hayOn ? 'text-emerald-300' : sel.some(([, st]) => st === 'booting') ? 'text-amber-300 animate-pulse' : 'text-slate-500');
+      if (lgDot) lgDot.className = estiloDot(lgSt);
+      if (xmDot) xmDot.className = estiloDot(xmSt);
+      if (lgBadge) { lgBadge.className = estiloBadge(lgSt); lgBadge.textContent = textoBadge(lgSt); }
+      if (xmBadge) { xmBadge.className = estiloBadge(xmSt); xmBadge.textContent = textoBadge(xmSt); }
+
+      // Estado en el display LCD superior
+      const stActual = (dispositivoActual === 'lg') ? lgSt : (dispositivoActual === 'xiaomi' ? xmSt : ((lgSt === 'on' || xmSt === 'on') ? 'on' : (lgSt === 'booting' || xmSt === 'booting' ? 'booting' : 'standby')));
+      const nombreDisp = (dispositivoActual === 'lg') ? 'LG 65"' : (dispositivoActual === 'xiaomi' ? 'XIAOMI' : 'AMBAS');
+      const ipDisp = (dispositivoActual === 'lg') ? (data.lg_ip || '') : (dispositivoActual === 'xiaomi' ? (data.xiaomi_ip || '') : '');
+      const ipTxt = ipDisp ? ` (.${ipDisp.split('.').pop()})` : '';
+
+      const lcdDot = document.getElementById('lcdPwrDot');
+      if (lcdDot) lcdDot.className = estiloDot(stActual);
+
+      const lcdTarget = document.getElementById('lcdTarget');
+      if (lcdTarget) {
+        if (stActual === 'on') {
+          lcdTarget.textContent = `TV: ${nombreDisp}${ipTxt} · ON`;
+          lcdTarget.className = 'font-bold text-emerald-300';
+        } else if (stActual === 'booting') {
+          lcdTarget.textContent = `TV: ${nombreDisp}${ipTxt} · INICIANDO...`;
+          lcdTarget.className = 'font-bold text-amber-300 animate-pulse tracking-tight';
+        } else {
+          lcdTarget.textContent = `TV: ${nombreDisp}${ipTxt} · STANDBY`;
+          lcdTarget.className = 'font-bold text-slate-500';
+        }
+      }
 
       const lcdTimer = document.getElementById('lcdTimer');
       if (minRest > 0) {

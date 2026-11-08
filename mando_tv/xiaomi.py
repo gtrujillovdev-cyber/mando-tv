@@ -4,11 +4,13 @@ import subprocess
 import time
 from .config import Color, IP_XIAOMI, MAC_XIAOMI, TIMER_FILE_XIAOMI_META
 from .wol import enviar_wol
+from . import discovery
 
 
 def encender_xiaomi() -> bool:
     """Despierta la Xiaomi TV restaurando retroiluminación al 50% y volumen."""
-    print(f"{Color.CYAN}[*] Despertando Xiaomi TV ({IP_XIAOMI})...{Color.END}")
+    ip = discovery.resolver_ip_xiaomi()
+    print(f"{Color.CYAN}[*] Despertando Xiaomi TV ({ip})...{Color.END}")
     enviar_wol(MAC_XIAOMI)
     conectar_adb_xiaomi()
     cmd = (
@@ -24,15 +26,17 @@ def encender_xiaomi() -> bool:
 
 
 def conectar_adb_xiaomi() -> bool:
-    cmd = f"adb connect {IP_XIAOMI}:5555"
+    ip = discovery.resolver_ip_xiaomi()
+    cmd = f"adb connect {ip}:5555"
     res = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return res.returncode == 0
 
 
 def ejecutar_adb_xiaomi(comando_shell: str):
+    ip = discovery.resolver_ip_xiaomi()
     conectar_adb_xiaomi()
     return subprocess.run(
-        ["adb", "-s", f"{IP_XIAOMI}:5555", "shell", comando_shell],
+        ["adb", "-s", f"{ip}:5555", "shell", comando_shell],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
     )
 

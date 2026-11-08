@@ -9,6 +9,7 @@ import uuid
 from typing import Dict, Optional
 from .config import Color, IP_LG, LG_CONFIG_PATH, MAC_LG, ROOT_DIR, TIMER_FILE_LG
 from .wol import enviar_wol
+from . import discovery
 
 
 _wol_ts = 0.0
@@ -16,15 +17,13 @@ BOOT_SEGUNDOS = 60  # tiempo máximo que se considera "arrancando" tras un WoL
 
 
 def puerto_abierto(ip: str, puerto: int, timeout: float = 0.3) -> bool:
-    import socket
-    with socket.socket() as s:
-        s.settimeout(timeout)
-        return s.connect_ex((ip, puerto)) == 0
+    return discovery.puerto_abierto(ip, puerto, timeout=timeout)
 
 
 def estado_lg() -> str:
     """'on' (SSAP accesible), 'booting' (WoL reciente sin respuesta aún) o 'standby'."""
-    if puerto_abierto(IP_LG, 3000):
+    ip = discovery.resolver_ip_lg()
+    if puerto_abierto(ip, 3000):
         return "on"
     return "booting" if time.time() - _wol_ts < BOOT_SEGUNDOS else "standby"
 
@@ -33,7 +32,8 @@ def esperar_lg(timeout: float = 45.0) -> bool:
     """Bloquea hasta que la LG acepte conexiones SSAP (tras encenderla por WoL)."""
     fin = time.time() + timeout
     while time.time() < fin:
-        if puerto_abierto(IP_LG, 3000):
+        ip = discovery.resolver_ip_lg()
+        if puerto_abierto(ip, 3000):
             return True
         time.sleep(0.5)
     return False
@@ -43,7 +43,8 @@ def encender_lg() -> bool:
     """Despierta la televisión LG 65\" webOS mediante Wake-on-LAN."""
     global _wol_ts
     _wol_ts = time.time()
-    print(f"{Color.CYAN}[*] Enviando señal Wake-on-LAN a LG 65\" ({MAC_LG} / {IP_LG})...{Color.END}")
+    ip = discovery.resolver_ip_lg()
+    print(f"{Color.CYAN}[*] Enviando señal Wake-on-LAN a LG 65\" ({MAC_LG} / {ip})...{Color.END}")
     ok = enviar_wol(MAC_LG)
     if ok:
         print(f"{Color.GREEN}[✓] Señal WoL enviada con éxito a LG 65\".{Color.END}")
@@ -136,8 +137,9 @@ class _Sesion:
 
     async def conectar(self):
         import websockets
+        ip = discovery.resolver_ip_lg()
         cfg = cargar_config_lg()
-        ws = await websockets.connect(f"ws://{cfg.get('ip', IP_LG)}:3000/", ping_interval=10, ping_timeout=5, open_timeout=3.0)
+        ws = await websockets.connect(f"ws://{ip}:3000/", ping_interval=10, ping_timeout=5, open_timeout=3.0)
         await ws.send(json.dumps({"type": "register", "id": "reg", "payload": {
             "forcePairing": False, "pairingType": "PROMPT",
             "client-key": cfg.get("client_key"), "manifest": MANIFEST}}))

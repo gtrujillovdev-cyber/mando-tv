@@ -1,5 +1,6 @@
 """Servidor HTTP: mando web, hub Siri y API."""
 from . import config
+from . import discovery
 from . import lg
 from . import scenes
 from . import timers
@@ -32,38 +33,43 @@ class MandoHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+    def _enviar_encabezados(self, tipo: str = "text/html; charset=utf-8", codigo: int = 200):
+        self.send_response(codigo)
+        self.send_header("Content-Type", tipo)
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        self.end_headers()
+
     def do_GET(self):
         url = urllib.parse.urlparse(self.path)
 
         try:
             if url.path in ["/", "/index.html"]:
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.end_headers()
+                self._enviar_encabezados("text/html; charset=utf-8")
                 self.wfile.write(_leer_web("index.html"))
 
             elif url.path in ["/siri", "/siri.html"]:
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.end_headers()
+                self._enviar_encabezados("text/html; charset=utf-8")
                 host = self.headers.get("Host") or "localhost"
                 self.wfile.write(_leer_web("siri.html").replace(b"__HOST__", host.encode()))
 
             elif url.path == "/api/status":
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                
+                lg_ip = discovery.resolver_ip_lg()
+                xm_ip = discovery.resolver_ip_xiaomi()
                 lg_st = lg.estado_lg()
-                xm_on = lg.puerto_abierto(config.IP_XIAOMI, 5555)
+                xm_on = discovery.puerto_abierto(xm_ip, 5555)
                 data = {
                     "lg_online": lg_st == "on",
                     "lg_state": lg_st,
+                    "lg_ip": lg_ip,
                     "xiaomi_online": xm_on,
                     "xiaomi_state": "on" if xm_on else "standby",
+                    "xiaomi_ip": xm_ip,
                     "timer_lg": timers.obtener_tiempo_restante_timer("lg"),
                     "timer_xiaomi": timers.obtener_tiempo_restante_timer("xiaomi")
                 }
+                self._enviar_encabezados("application/json")
                 self.wfile.write(json.dumps(data).encode("utf-8"))
 
             elif url.path == "/api/action":
@@ -92,21 +98,18 @@ class MandoHandler(BaseHTTPRequestHandler):
                 if cmd not in ("encender", "cancelar_timer"):
                     estados = []
                     if target in ("lg", "ambas"):
-                        estados.append(("LG", lg.estado_lg()))
+                        estados.append(("LG 65\"", lg.estado_lg()))
                     if target in ("xiaomi", "ambas"):
-                        estados.append(("XIAOMI", "on" if lg.puerto_abierto(config.IP_XIAOMI, 5555) else "standby"))
+                        xm_ip = discovery.resolver_ip_xiaomi()
+                        estados.append(("Xiaomi", "on" if discovery.puerto_abierto(xm_ip, 5555) else "standby"))
                     if estados and not any(st == "on" for _, st in estados):
                         nombre, st = estados[0]
-                        msg = f"{nombre} ARRANCANDO..." if st == "booting" else f"{nombre} APAGADA · PULSA ON"
-                        self.send_response(200)
-                        self.send_header("Content-Type", "application/json")
-                        self.end_headers()
+                        msg = f"{nombre} INICIANDO..." if st == "booting" else f"{nombre} EN ESPERA · PULSA '⚡ ON'"
+                        self._enviar_encabezados("application/json")
                         self.wfile.write(json.dumps({"ok": False, "mensaje": msg}).encode("utf-8"))
                         return
 
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
+                self._enviar_encabezados("application/json")
                 self.wfile.write(json.dumps({"ok": True, "mensaje": mensaje}).encode("utf-8"))
 
                 # Ejecución en segundo plano sin bloquear el navegador
@@ -127,9 +130,7 @@ class MandoHandler(BaseHTTPRequestHandler):
                 nombre_p = nombres.get(platform, platform.capitalize())
                 msg = f"▶ Buscando '{query}' en {nombre_p}" if query else f"Abriendo {nombre_p}"
 
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
+                self._enviar_encabezados("application/json")
                 self.wfile.write(json.dumps({"ok": True, "mensaje": msg}).encode("utf-8"))
 
             elif url.path == "/api/siri":
@@ -142,9 +143,7 @@ class MandoHandler(BaseHTTPRequestHandler):
 
                 respuesta_siri = self.procesar_comando_siri(action, target, q, platform, val)
 
-                self.send_response(200)
-                self.send_header("Content-Type", "text/plain; charset=utf-8")
-                self.end_headers()
+                self._enviar_encabezados("text/plain; charset=utf-8")
                 self.wfile.write(respuesta_siri.encode("utf-8"))
 
             else:

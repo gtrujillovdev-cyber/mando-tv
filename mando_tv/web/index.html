@@ -467,52 +467,52 @@
   </div>
 
   <!-- 2. CABECERA: PWR ON | SELECTOR MULTI-TV CON ESTADO EN TIEMPO REAL | PWR OFF -->
-  <div class="flex items-center justify-between gap-1.5 flex-shrink-0">
-    <button id="btnPowerOn" onclick="solicitarEncendido()" title="Encender TV" class="btn-power-on px-3.5 h-9 rounded-xl flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-all shadow">
+  <div class="flex items-center justify-between gap-1.5 flex-shrink-0 w-full">
+    <button id="btnPowerOn" onclick="solicitarEncendido()" title="Encender TV" class="btn-power-on px-2.5 h-8 rounded-xl flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-all shadow flex-shrink-0">
       <span>⚡</span> <span>ON</span>
     </button>
 
-    <div class="flex-1 flex retro-selector-bar p-0.5 gap-0.5">
-      <button onclick="setDispositivo('xiaomi')" id="tab-xiaomi" class="retro-tab active flex-1 py-1 text-[11px] font-extrabold flex items-center justify-center gap-1">
-        <span id="dot-xiaomi" class="inline-block w-2 h-2 rounded-full bg-slate-400 transition-all duration-300"></span>
-        <span>Xiaomi</span>
-        <span id="badge-xiaomi" class="text-[8.5px] px-1 py-0.2 rounded font-mono font-bold bg-slate-300 text-slate-800">OFF</span>
+    <div class="flex-1 flex retro-selector-bar p-0.5 gap-0.5 h-8 items-center overflow-hidden">
+      <button onclick="setDispositivo('xiaomi')" id="tab-xiaomi" class="retro-tab active flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center gap-1 whitespace-nowrap rounded-lg">
+        <span id="dot-xiaomi" class="inline-block w-2 h-2 rounded-full bg-slate-400 transition-all duration-300 flex-shrink-0"></span>
+        <span class="whitespace-nowrap">Xiaomi</span>
+        <span id="badge-xiaomi" class="text-[8px] px-1 py-0.2 rounded font-mono font-bold bg-slate-300 text-slate-800 flex-shrink-0">OFF</span>
       </button>
-      <button onclick="setDispositivo('lg')" id="tab-lg" class="retro-tab flex-1 py-1 text-[11px] font-extrabold flex items-center justify-center gap-1">
-        <span id="dot-lg" class="inline-block w-2 h-2 rounded-full bg-slate-400 transition-all duration-300"></span>
-        <span>LG 65"</span>
-        <span id="badge-lg" class="text-[8.5px] px-1 py-0.2 rounded font-mono font-bold bg-slate-300 text-slate-800">OFF</span>
+      <button onclick="setDispositivo('lg')" id="tab-lg" class="retro-tab flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center gap-1 whitespace-nowrap rounded-lg">
+        <span id="dot-lg" class="inline-block w-2 h-2 rounded-full bg-slate-400 transition-all duration-300 flex-shrink-0"></span>
+        <span class="whitespace-nowrap font-black">LG 65"</span>
+        <span id="badge-lg" class="text-[8px] px-1 py-0.2 rounded font-mono font-bold bg-slate-300 text-slate-800 flex-shrink-0">OFF</span>
       </button>
-      <button onclick="setDispositivo('ambas')" id="tab-ambas" class="retro-tab flex-1 py-1 text-[11px] font-extrabold">
-        Ambas
+      <button onclick="setDispositivo('ambas')" id="tab-ambas" class="retro-tab flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center whitespace-nowrap rounded-lg">
+        <span class="whitespace-nowrap">Ambas</span>
       </button>
     </div>
 
-    <button id="btnPowerOff" onclick="solicitarApagado()" title="Apagar TV" class="btn-power-off px-3.5 h-9 rounded-xl flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-all shadow">
+    <button id="btnPowerOff" onclick="solicitarApagado()" title="Apagar TV" class="btn-power-off px-2.5 h-8 rounded-xl flex items-center justify-center gap-1 font-black text-xs active:scale-95 transition-all shadow flex-shrink-0">
       <span>⏻</span> <span>OFF</span>
     </button>
   </div>
 
-  <!-- 3. SELECTOR DE FUENTES STREAMING & BARRA DE COMANDO (BIEN ENCUADRADO 2x3) -->
+  <!-- 3. SELECTOR DE FUENTES STREAMING (ACCESO DIRECTO TÁCTIL 2x3) & BARRA DE COMANDO -->
   <div class="w-full flex-shrink-0 space-y-1">
-    <div class="grid grid-cols-3 gap-1 w-full">
-      <button type="button" onclick="setPlataforma('smarttube')" id="plat-smarttube" class="plat-tab active-p py-1 px-1 rounded-lg text-[10.5px] font-extrabold flex items-center justify-center gap-1 truncate shadow-sm">
-        📺 <span id="lblTube">SmartTube</span>
+    <div class="grid grid-cols-3 gap-1.5 w-full">
+      <button type="button" onclick="lanzarPlataforma('smarttube')" id="plat-smarttube" class="plat-tab active-p py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+        <span class="text-xs">📺</span> <span id="lblTube">SmartTube</span>
       </button>
-      <button type="button" onclick="setPlataforma('netflix')" id="plat-netflix" class="plat-tab py-1 px-1 rounded-lg text-[10.5px] font-extrabold flex items-center justify-center gap-1 truncate shadow-sm">
-        🍿 <span>Netflix</span>
+      <button type="button" onclick="lanzarPlataforma('netflix')" id="plat-netflix" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+        <span class="text-xs">🍿</span> <span>Netflix</span>
       </button>
-      <button type="button" onclick="setPlataforma('prime')" id="plat-prime" class="plat-tab py-1 px-1 rounded-lg text-[10.5px] font-extrabold flex items-center justify-center gap-1 truncate shadow-sm">
-        📦 <span>Prime</span>
+      <button type="button" onclick="lanzarPlataforma('prime')" id="plat-prime" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+        <span class="text-xs">📦</span> <span>Prime</span>
       </button>
-      <button type="button" onclick="setPlataforma('disney')" id="plat-disney" class="plat-tab py-1 px-1 rounded-lg text-[10.5px] font-extrabold flex items-center justify-center gap-1 truncate shadow-sm">
-        ✨ <span>Disney+</span>
+      <button type="button" onclick="lanzarPlataforma('disney')" id="plat-disney" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+        <span class="text-xs">✨</span> <span>Disney+</span>
       </button>
-      <button type="button" onclick="setPlataforma('movistar')" id="plat-movistar" class="plat-tab py-1 px-1 rounded-lg text-[10.5px] font-extrabold flex items-center justify-center gap-1 truncate shadow-sm">
-        🔵 <span>Movistar+</span>
+      <button type="button" onclick="lanzarPlataforma('movistar')" id="plat-movistar" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+        <span class="text-xs">🔵</span> <span>Movistar+</span>
       </button>
-      <button type="button" onclick="setPlataforma('dazn')" id="plat-dazn" class="plat-tab py-1 px-1 rounded-lg text-[10.5px] font-extrabold flex items-center justify-center gap-1 truncate shadow-sm">
-        ⚽ <span>DAZN</span>
+      <button type="button" onclick="lanzarPlataforma('dazn')" id="plat-dazn" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+        <span class="text-xs">⚽</span> <span>DAZN</span>
       </button>
     </div>
 
@@ -523,7 +523,7 @@
         enterkeyhint="search" 
         autocomplete="off" 
         spellcheck="false" 
-        placeholder="🔍 Buscar o abrir en SmartTube..." 
+        placeholder="🔍 Buscar o abrir en YouTube..." 
         class="w-full retro-input rounded-xl pl-3 pr-12 py-1.5 text-xs font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <button type="submit" class="absolute right-1 px-3 py-1 bg-blue-600 active:bg-blue-700 text-white rounded-lg text-xs font-bold shadow">
@@ -532,21 +532,29 @@
     </form>
   </div>
 
-  <!-- 4. CONTROLES ANALÓGICOS: RETROILUMINACIÓN & VOLUMEN MAESTRO -->
+  <!-- 4. CONTROLES ANALÓGICOS: RETROILUMINACIÓN & VOLUMEN MAESTRO (CARGA REAL O 0%) -->
   <div class="retro-sliders-box p-2 space-y-1 flex-shrink-0">
     <div>
       <div class="flex justify-between items-center text-[9.5px] font-mono font-black tracking-wider mb-0.5">
         <span class="opacity-90">☀️ RETROILUMINACIÓN</span>
-        <span id="brilloVal" class="text-sky-600 dark:text-sky-400 font-extrabold text-[10.5px]">6%</span>
+        <span id="brilloVal" class="text-sky-600 dark:text-sky-400 font-extrabold text-[10.5px]">0%</span>
       </div>
-      <input id="sliderBrillo" type="range" min="0" max="100" value="6" oninput="actualizarLabelBrillo(this.value)" onchange="enviarBrillo(this.value)" class="w-full">
+      <input id="sliderBrillo" type="range" min="0" max="100" value="0" 
+        onpointerdown="_sliderBrilloActivo = true" 
+        ontouchstart="_sliderBrilloActivo = true" 
+        oninput="actualizarLabelBrillo(this.value)" 
+        onchange="enviarBrillo(this.value)" class="w-full">
     </div>
     <div>
       <div class="flex justify-between items-center text-[9.5px] font-mono font-black tracking-wider mb-0.5">
         <span class="opacity-90">🔊 VOLUMEN MAESTRO</span>
-        <span id="volVal" class="text-purple-600 dark:text-purple-400 font-extrabold text-[10.5px]">15%</span>
+        <span id="volVal" class="text-purple-600 dark:text-purple-400 font-extrabold text-[10.5px]">0%</span>
       </div>
-      <input id="sliderVol" type="range" min="0" max="100" value="15" oninput="actualizarLabelVol(this.value)" onchange="enviarVolumen(this.value)" class="w-full slider-vol">
+      <input id="sliderVol" type="range" min="0" max="100" value="0" 
+        onpointerdown="_sliderVolActivo = true" 
+        ontouchstart="_sliderVolActivo = true" 
+        oninput="actualizarLabelVol(this.value)" 
+        onchange="enviarVolumen(this.value)" class="w-full slider-vol">
     </div>
   </div>
 
@@ -696,16 +704,11 @@
 
 <script>
   let dispositivoActual = localStorage.getItem('mando_target') || 'xiaomi';
-  window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      setDispositivo(dispositivoActual);
-      actualizarBotonTema();
-    }, 0);
-  });
-
   let plataformaActual = 'smarttube';
   let audioEsSharp = true;
   let timerActualMinutos = 0;
+  let _sliderBrilloActivo = false;
+  let _sliderVolActivo = false;
 
   const placeholders = {
     'smarttube': '🔍 Buscar o abrir en SmartTube...',
@@ -716,6 +719,13 @@
     'movistar': '🔵 Buscar o abrir en Movistar+...',
     'dazn': '⚽ Buscar o abrir en DAZN...'
   };
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      setDispositivo(dispositivoActual);
+      actualizarBotonTema();
+    }, 0);
+  });
 
   /* =======================================================================
      SISTEMA DE TEMAS: AUTOMÁTICO (SISTEMA) | CLARO | OSCURO
@@ -812,9 +822,9 @@
       const el = document.getElementById('tab-' + t);
       if (!el) return;
       if (t === target) {
-        el.className = 'retro-tab active flex-1 py-1 text-[11px] font-extrabold flex items-center justify-center gap-1';
+        el.className = 'retro-tab active flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center gap-1 whitespace-nowrap rounded-lg';
       } else {
-        el.className = 'retro-tab flex-1 py-1 text-[11px] font-extrabold flex items-center justify-center gap-1';
+        el.className = 'retro-tab flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center gap-1 whitespace-nowrap rounded-lg';
       }
     });
 
@@ -827,28 +837,60 @@
       btnTube.innerHTML = (target === 'lg') ? '▶️ <span>YouTube</span>' : '📺 <span id="lblTube">SmartTube</span>';
     }
 
+    actualizarVisualPlataformas();
     actualizarStatus('CONTROL: ' + target.toUpperCase());
     sincronizarEstadoServidor();
   }
 
-  function setPlataforma(plat) {
+  /* LANZAMIENTO DIRECTO EN LA TELE AL TOCAR EL BOTÓN */
+  async function lanzarPlataforma(plat) {
     vibrar();
     plataformaActual = plat;
+    actualizarVisualPlataformas();
+
+    const platEfectiva = (plat === 'smarttube' && dispositivoActual === 'lg') ? 'youtube' : plat;
+    const nombres = {
+      'smarttube': 'SmartTube',
+      'youtube': 'YouTube',
+      'netflix': 'Netflix',
+      'prime': 'Prime Video',
+      'disney': 'Disney+',
+      'movistar': 'Movistar Plus+',
+      'dazn': 'DAZN'
+    };
+    const nombreDisp = nombres[platEfectiva] || platEfectiva.toUpperCase();
+    actualizarStatus('ABRIENDO ' + nombreDisp.toUpperCase() + ' EN ' + dispositivoActual.toUpperCase() + '...');
+
+    try {
+      const url = '/api/voice?q=&platform=' + encodeURIComponent(platEfectiva) + '&target=' + encodeURIComponent(dispositivoActual);
+      const res = await fetch(url);
+      const data = await res.json();
+      actualizarStatus(data.mensaje || ('ABRIENDO ' + nombreDisp));
+    } catch(e) {
+      actualizarStatus('ERR CONEXIÓN');
+    }
+  }
+
+  function setPlataforma(plat) {
+    lanzarPlataforma(plat);
+  }
+
+  function actualizarVisualPlataformas() {
     const plats = ['smarttube', 'netflix', 'prime', 'disney', 'movistar', 'dazn'];
     plats.forEach(p => {
       const btn = document.getElementById('plat-' + p);
       if (btn) {
-        if (p === plat) {
-          btn.className = 'plat-tab active-p py-1 px-1 rounded-lg text-[10.5px] font-extrabold flex items-center justify-center gap-1 truncate shadow-sm';
+        if (p === plataformaActual) {
+          btn.className = 'plat-tab active-p py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all';
         } else {
-          btn.className = 'plat-tab py-1 px-1 rounded-lg text-[10.5px] font-extrabold flex items-center justify-center gap-1 truncate shadow-sm';
+          btn.className = 'plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all';
         }
       }
     });
     const inp = document.getElementById('inputBusqueda');
     if (inp) {
-      const targetPlat = (plat === 'smarttube' && dispositivoActual === 'lg') ? 'youtube' : plat;
-      inp.placeholder = placeholders[targetPlat] || placeholders[plat] || '🔍 Buscar...';
+      const targetPlat = (plataformaActual === 'smarttube' && dispositivoActual === 'lg') ? 'youtube' : plataformaActual;
+      inp.placeholder = placeholders[targetPlat] || placeholders[plataformaActual] || '🔍 Buscar...';
       inp.value = '';
     }
   }
@@ -910,6 +952,7 @@
     document.getElementById('brilloVal').textContent = v + '%';
   }
   function enviarBrillo(v) {
+    _sliderBrilloActivo = false;
     enviarAccion('set_brillo', v);
   }
 
@@ -917,6 +960,7 @@
     document.getElementById('volVal').textContent = v + '%';
   }
   function enviarVolumen(v) {
+    _sliderVolActivo = false;
     enviarAccion('set_volumen', v);
   }
 
@@ -979,8 +1023,6 @@
 
       const stActual = (dispositivoActual === 'lg') ? lgSt : (dispositivoActual === 'xiaomi' ? xmSt : ((lgSt === 'on' || xmSt === 'on') ? 'on' : (lgSt === 'booting' || xmSt === 'booting' ? 'booting' : 'standby')));
       const nombreDisp = (dispositivoActual === 'lg') ? 'LG 65"' : (dispositivoActual === 'xiaomi' ? 'XIAOMI' : 'AMBAS');
-      const ipDisp = (dispositivoActual === 'lg') ? (data.lg_ip || '') : (dispositivoActual === 'xiaomi' ? (data.xiaomi_ip || '') : '');
-      const ipTxt = ipDisp ? ` (.${ipDisp.split('.').pop()})` : '';
 
       const lcdDot = document.getElementById('lcdPwrDot');
       if (lcdDot) lcdDot.className = estiloDot(stActual);
@@ -988,12 +1030,46 @@
       const lcdTarget = document.getElementById('lcdTarget');
       if (lcdTarget) {
         if (stActual === 'on') {
-          lcdTarget.textContent = `TV: ${nombreDisp}${ipTxt} · ON`;
+          lcdTarget.textContent = `TV: ${nombreDisp} · ON`;
         } else if (stActual === 'booting') {
-          lcdTarget.textContent = `TV: ${nombreDisp}${ipTxt} · INICIANDO...`;
+          lcdTarget.textContent = `TV: ${nombreDisp} · INICIANDO...`;
         } else {
-          lcdTarget.textContent = `TV: ${nombreDisp}${ipTxt} · STANDBY`;
+          lcdTarget.textContent = `TV: ${nombreDisp} · STANDBY`;
         }
+      }
+
+      // Sincronizar sliders analógicos con los valores reales de la TV activa (o 0 si está en standby)
+      let volReal = 0;
+      let brilloReal = 0;
+      if (dispositivoActual === 'lg') {
+        volReal = (lgSt === 'on') ? (data.lg_vol ?? 0) : 0;
+        brilloReal = (lgSt === 'on') ? (data.lg_backlight ?? 0) : 0;
+        if (data.lg_audio) {
+          audioEsSharp = (data.lg_audio !== 'tv_speaker');
+          const lblAudio = document.getElementById('lblAudioOut');
+          const lcdAudio = document.getElementById('lcdAudio');
+          if (lblAudio) lblAudio.textContent = audioEsSharp ? 'ARC: SHARP' : 'SPK: TV';
+          if (lcdAudio) lcdAudio.textContent = audioEsSharp ? 'ARC: SHARP' : 'SPK: TV';
+        }
+      } else if (dispositivoActual === 'xiaomi') {
+        volReal = (xmSt === 'on') ? (data.xiaomi_vol ?? 0) : 0;
+        brilloReal = (xmSt === 'on') ? (data.xiaomi_backlight ?? 0) : 0;
+      } else {
+        volReal = Math.max((lgSt === 'on' ? (data.lg_vol ?? 0) : 0), (xmSt === 'on' ? (data.xiaomi_vol ?? 0) : 0));
+        brilloReal = Math.max((lgSt === 'on' ? (data.lg_backlight ?? 0) : 0), (xmSt === 'on' ? (data.xiaomi_backlight ?? 0) : 0));
+      }
+
+      if (!_sliderVolActivo) {
+        const sVol = document.getElementById('sliderVol');
+        const vLbl = document.getElementById('volVal');
+        if (sVol) sVol.value = volReal;
+        if (vLbl) vLbl.textContent = volReal + '%';
+      }
+      if (!_sliderBrilloActivo) {
+        const sBrillo = document.getElementById('sliderBrillo');
+        const bLbl = document.getElementById('brilloVal');
+        if (sBrillo) sBrillo.value = brilloReal;
+        if (bLbl) bLbl.textContent = brilloReal + '%';
       }
 
       const lcdTimer = document.getElementById('lcdTimer');

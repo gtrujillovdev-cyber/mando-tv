@@ -137,3 +137,26 @@ def xiaomi_volumen(nivel: int):
 def xiaomi_mute():
     ejecutar_adb_xiaomi("input keyevent 164")
     print(f"{Color.GREEN}[✓] Xiaomi TV: Mute conmutado.{Color.END}")
+
+
+def obtener_info_xiaomi() -> dict:
+    """Lee retroiluminación y volumen actuales de la Xiaomi vía ADB."""
+    vol = 0
+    backlight = 0
+    try:
+        ip = discovery.resolver_ip_xiaomi()
+        if not discovery.puerto_abierto(ip, 5555):
+            return {"volume": 0, "backlight": 0}
+        res = ejecutar_adb_xiaomi("settings get system screen_brightness 2>/dev/null; settings get system volume_music_speaker 2>/dev/null")
+        if res and res.stdout:
+            lines = res.stdout.strip().split()
+            if len(lines) >= 1 and lines[0].isdigit():
+                val_b = int(lines[0])
+                backlight = min(100, max(0, round((val_b / 255.0) * 100)))
+            if len(lines) >= 2 and lines[1].isdigit():
+                val_v = int(lines[1])
+                vol = min(100, max(0, round((val_v / 15.0) * 100)))
+    except Exception:
+        pass
+    return {"volume": vol, "backlight": backlight}
+

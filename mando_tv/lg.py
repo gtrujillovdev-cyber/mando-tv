@@ -6,7 +6,7 @@ import subprocess
 import threading
 import time
 import uuid
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from .config import Color, IP_LG, LG_CONFIG_PATH, MAC_LG, ROOT_DIR, TIMER_FILE_LG
 from .wol import enviar_wol
 from . import discovery
@@ -283,6 +283,38 @@ async def _ejecutar(accion: str, p: Dict):
         await s.boton(tecla)  # puntero: UP/DOWN/LEFT/RIGHT/ENTER/BACK/HOME/MENU/CH±...
         return True
     return False
+
+
+async def _leer_info_actual() -> Dict[str, Any]:
+    s = _sesion
+    await s.conectar()
+    vol = 0
+    backlight = 0
+    sound_out = "tv_speaker"
+    try:
+        r_vol = await s.req("ssap://audio/getVolume")
+        payload = r_vol.get("payload", {})
+        vs = payload.get("volumeStatus", {})
+        vol = vs.get("volume", payload.get("volume", 0))
+        sound_out = vs.get("soundOutput", sound_out)
+    except Exception:
+        pass
+    try:
+        r_pic = await s.req("ssap://settings/getSystemSettings", {"category": "picture", "keys": ["backlight", "brightness"]})
+        settings = r_pic.get("payload", {}).get("settings", {})
+        backlight = int(settings.get("backlight", settings.get("brightness", 0)))
+    except Exception:
+        pass
+    return {"volume": vol, "backlight": backlight, "soundOutput": sound_out}
+
+
+def obtener_info_lg() -> Dict[str, Any]:
+    """Obtiene volumen, retroiluminación y salida de audio actuales de la LG en <100ms."""
+    try:
+        fut = asyncio.run_coroutine_threadsafe(_leer_info_actual(), _loop())
+        return fut.result(timeout=1.5)
+    except Exception:
+        return {"volume": 0, "backlight": 0, "soundOutput": "tv_speaker"}
 
 
 async def enviar_comando_lg(accion: str, payload_extra: Optional[Dict] = None) -> bool:

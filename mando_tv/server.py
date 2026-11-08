@@ -59,13 +59,20 @@ class MandoHandler(BaseHTTPRequestHandler):
                 xm_ip = discovery.resolver_ip_xiaomi()
                 lg_st = lg.estado_lg()
                 xm_on = discovery.puerto_abierto(xm_ip, 5555)
+                lg_info = lg.obtener_info_lg() if lg_st == "on" else {"volume": 0, "backlight": 0, "soundOutput": "tv_speaker"}
+                xm_info = xiaomi.obtener_info_xiaomi() if xm_on else {"volume": 0, "backlight": 0}
                 data = {
                     "lg_online": lg_st == "on",
                     "lg_state": lg_st,
                     "lg_ip": lg_ip,
+                    "lg_vol": lg_info.get("volume", 0),
+                    "lg_backlight": lg_info.get("backlight", 0),
+                    "lg_audio": lg_info.get("soundOutput", "tv_speaker"),
                     "xiaomi_online": xm_on,
                     "xiaomi_state": "on" if xm_on else "standby",
                     "xiaomi_ip": xm_ip,
+                    "xiaomi_vol": xm_info.get("volume", 0),
+                    "xiaomi_backlight": xm_info.get("backlight", 0),
                     "timer_lg": timers.obtener_tiempo_restante_timer("lg"),
                     "timer_xiaomi": timers.obtener_tiempo_restante_timer("xiaomi")
                 }

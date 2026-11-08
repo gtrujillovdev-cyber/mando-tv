@@ -256,7 +256,17 @@ async def _ejecutar(accion: str, p: Dict):
                                  "picture", {"energySaving": "screen_off"})
         return True
     if accion == "app":
-        r = await s.req("ssap://system.launcher/open", {"id": p.get("id", "youtube.leanback.v4"), "params": p.get("params", {})})
+        app_id = p.get("id", "youtube.leanback.v4")
+        params = p.get("params", {})
+        r = await s.req("ssap://system.launcher/open", {"id": app_id, "params": params})
+        ok = r.get("payload", {}).get("returnValue", False)
+        if not ok and app_id == "com.movistar.es":
+            r = await s.req("ssap://system.launcher/open", {"id": "movistarplus", "params": params})
+            ok = r.get("payload", {}).get("returnValue", False)
+            if not ok:
+                r = await s.req("ssap://system.launcher/open", {"id": "com.telefonica.movistarplus", "params": params})
+        elif not ok and app_id == "dazn":
+            r = await s.req("ssap://system.launcher/open", {"id": "com.dazn.app", "params": params})
         return r.get("payload", {}).get("returnValue", True)
     if accion == "audio_output":
         r = await s.req("ssap://audio/changeSoundOutput", {"output": p.get("output", "external_arc")})

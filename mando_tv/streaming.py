@@ -1,4 +1,4 @@
-"""Lanzador de contenido (SmartTube, Netflix, Prime, Disney+, Spotify...)."""
+"""Lanzador de contenido (SmartTube, Netflix, Prime, Disney+, Movistar+, DAZN...)."""
 from . import lg
 from . import xiaomi
 import socket
@@ -16,14 +16,14 @@ def _is_online(ip: str, port: int, timeout: float = 0.5) -> bool:
 
 def reproducir_streaming(query: str, plataforma: str = "smarttube", target: str = "xiaomi") -> str:
     """
-    Lanza contenido en la plataforma indicada (SmartTube, YouTube, Netflix, Prime, Disney+, Spotify)
+    Lanza contenido en la plataforma indicada (SmartTube, YouTube, Netflix, Prime, Disney+, Movistar+, DAZN)
     tanto en Xiaomi TV (Android TV intents) como en LG 65" (webOS luna).
     """
     q_clean = query.strip()
     q_enc = urllib.parse.quote_plus(q_clean) if q_clean else ""
     nombres = {
         "smarttube": "SmartTube", "youtube": "YouTube", "netflix": "Netflix",
-        "prime": "Prime Video", "disney": "Disney+", "spotify": "Spotify"
+        "prime": "Prime Video", "disney": "Disney+", "movistar": "Movistar Plus+", "dazn": "DAZN"
     }
     nombre_plat = nombres.get(plataforma, plataforma.capitalize())
 
@@ -73,11 +73,18 @@ def reproducir_streaming(query: str, plataforma: str = "smarttube", target: str 
                 cmd = "monkey -p com.disney.disneyplus -c android.intent.category.LAUNCHER 1"
             xiaomi.ejecutar_adb_xiaomi(cmd)
 
-        elif plataforma == "spotify":
+        elif plataforma == "movistar":
             if q_clean:
-                cmd = f"am start -a android.intent.action.VIEW -d 'spotify:search:{q_enc}' -n com.spotify.tv.android/.MainActivity"
+                cmd = f"am start -a android.intent.action.VIEW -d 'https://ver.movistarplus.es/busqueda?q={q_enc}' -n es.plus.o2o/.ui.splash.SplashActivity || monkey -p es.plus.o2o -c android.intent.category.LAUNCHER 1"
             else:
-                cmd = "monkey -p com.spotify.tv.android -c android.intent.category.LAUNCHER 1"
+                cmd = "monkey -p es.plus.o2o -c android.intent.category.LAUNCHER 1 || monkey -p com.movistar.plus -c android.intent.category.LAUNCHER 1"
+            xiaomi.ejecutar_adb_xiaomi(cmd)
+
+        elif plataforma == "dazn":
+            if q_clean:
+                cmd = f"am start -a android.intent.action.VIEW -d 'dazn://search?query={q_enc}' -n com.dazn/.MainActivity || monkey -p com.dazn -c android.intent.category.LAUNCHER 1"
+            else:
+                cmd = "monkey -p com.dazn -c android.intent.category.LAUNCHER 1"
             xiaomi.ejecutar_adb_xiaomi(cmd)
 
     # 2. LG 65" (webOS luna commands)
@@ -93,7 +100,8 @@ def reproducir_streaming(query: str, plataforma: str = "smarttube", target: str 
             "prime": "amazon",
             "amazon": "amazon",
             "disney": "disneyplus",
-            "spotify": "spotify-medialink-20"
+            "movistar": "com.movistar.es",
+            "dazn": "dazn"
         }
         app_id = mapping_lg.get(plataforma, "youtube.leanback.v4")
         params = {}

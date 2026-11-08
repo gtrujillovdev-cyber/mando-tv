@@ -126,7 +126,10 @@ class MandoHandler(BaseHTTPRequestHandler):
                     reproducir_streaming(query, platform, target)
                 threading.Thread(target=_do_stream, daemon=True).start()
 
-                nombres = {"smarttube": "SmartTube", "netflix": "Netflix", "prime": "Prime Video", "disney": "Disney+", "spotify": "Spotify", "youtube": "YouTube"}
+                nombres = {
+                    "smarttube": "SmartTube", "netflix": "Netflix", "prime": "Prime Video",
+                    "disney": "Disney+", "movistar": "Movistar Plus+", "dazn": "DAZN", "youtube": "YouTube"
+                }
                 nombre_p = nombres.get(platform, platform.capitalize())
                 msg = f"▶ Buscando '{query}' en {nombre_p}" if query else f"Abriendo {nombre_p}"
 
@@ -283,7 +286,10 @@ class MandoHandler(BaseHTTPRequestHandler):
             return "Audio cambiado a los altavoces de la televisión LG."
 
         elif action in ["ver", "buscar", "poner", "reproducir"]:
-            nombres = {"smarttube": "SmartTube", "netflix": "Netflix", "prime": "Prime Video", "disney": "Disney+", "spotify": "Spotify", "youtube": "YouTube"}
+            nombres = {
+                "smarttube": "SmartTube", "netflix": "Netflix", "prime": "Prime Video",
+                "disney": "Disney+", "movistar": "Movistar Plus+", "dazn": "DAZN", "youtube": "YouTube"
+            }
             nombre_p = nombres.get(platform, platform.capitalize())
             def _v():
                 reproducir_streaming(q, platform, target)

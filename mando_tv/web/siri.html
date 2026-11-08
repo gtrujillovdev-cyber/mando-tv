@@ -1,10 +1,23 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-[#07090e]">
+<html lang="es" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#07090e">
+  <meta name="theme-color" content="#07090e" id="metaThemeColor">
   <title>Atajos de Voz de Siri - Mando TV</title>
+  <script>
+    (function() {
+      try {
+        var modo = localStorage.getItem('mando_theme') || 'auto';
+        var mql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+        var sistemaOscuro = mql ? mql.matches : false;
+        var efectivo = (modo === 'auto') ? (sistemaOscuro ? 'dark' : 'light') : modo;
+        document.documentElement.className = 'h-full theme-' + efectivo;
+        var meta = document.getElementById('metaThemeColor');
+        if (meta) meta.setAttribute('content', efectivo === 'light' ? '#f1f5f9' : '#07090e');
+      } catch(e) {}
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -12,16 +25,49 @@
       --sat: env(safe-area-inset-top, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
     }
+    html.theme-light {
+      --bg-body: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: #cbd5e1;
+      --text-main: #0f172a;
+      --text-sub: #334155;
+      --code-bg: #f8fafc;
+      --code-border: #cbd5e1;
+      --code-text: #0f172a;
+      --btn-bg: #e2e8f0;
+      --btn-text: #0f172a;
+    }
+    html.theme-dark {
+      --bg-body: #07090e;
+      --card-bg: rgba(18, 24, 38, 0.75);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-main: #ffffff;
+      --text-sub: #94a3b8;
+      --code-bg: rgba(0, 0, 0, 0.6);
+      --code-border: rgba(255, 255, 255, 0.08);
+      --code-text: #94a3b8;
+      --btn-bg: #1e293b;
+      --btn-text: #ffffff;
+    }
     body {
-      background-color: #07090e;
-      color: #e2e8f0;
+      background-color: var(--bg-body);
+      color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
     .glass-card {
-      background: rgba(18, 24, 38, 0.75);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+    .code-box {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      color: var(--code-text);
+    }
+    .code-container {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
     }
   </style>
 </head>
@@ -33,7 +79,7 @@
       <a href="/" class="text-sky-400 hover:text-white flex items-center gap-1 text-xs font-bold bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700 active:scale-95 transition-all">
         <span>↩</span> <span>Mando</span>
       </a>
-      <h1 class="text-sm font-black text-white flex items-center gap-1.5">
+      <h1 class="text-sm font-black flex items-center gap-1.5" style="color: var(--text-main);">
         <span>🎙️</span> <span>Atajos de Voz de Siri</span>
       </h1>
       <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800/50">Online</span>
@@ -74,7 +120,7 @@
             <span class="text-lg">⚡</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, enciende la tele LG"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, enciende la tele LG"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-sky-950 text-sky-300 rounded border border-sky-700/60 font-bold">LG</span>
               </div>
               <div class="text-[10px] text-sky-300">Envía paquete mágico Wake-on-LAN a la LG 65"</div>
@@ -84,8 +130,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-lg-on" value="http://__HOST__/api/siri?action=encender&target=lg" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-lg-on" value="http://__HOST__/api/siri?action=encender&target=lg" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-lg-on')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -97,7 +143,7 @@
             <span class="text-lg">🔌</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, apaga la tele LG"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, apaga la tele LG"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-sky-950 text-sky-300 rounded border border-sky-700/60 font-bold">LG</span>
               </div>
               <div class="text-[10px] text-rose-300">Apagado por WebSocket SSAP</div>
@@ -107,8 +153,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-lg-off" value="http://__HOST__/api/siri?action=apagar&target=lg" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-lg-off" value="http://__HOST__/api/siri?action=apagar&target=lg" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-lg-off')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -120,7 +166,7 @@
             <span class="text-lg">🌙</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, modo noche en la LG"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, modo noche en la LG"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-sky-950 text-sky-300 rounded border border-sky-700/60 font-bold">LG</span>
               </div>
               <div class="text-[10px] text-indigo-300">LG: Retroiluminación al 6% + temporizador 90m</div>
@@ -130,8 +176,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-lg-noche" value="http://__HOST__/api/siri?action=noche&target=lg" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-lg-noche" value="http://__HOST__/api/siri?action=noche&target=lg" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-lg-noche')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -143,7 +189,7 @@
             <span class="text-lg">☀️</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, modo día en la LG"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, modo día en la LG"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-sky-950 text-sky-300 rounded border border-sky-700/60 font-bold">LG</span>
               </div>
               <div class="text-[10px] text-amber-300">LG: Retroiluminación al 100%</div>
@@ -153,8 +199,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-lg-dia" value="http://__HOST__/api/siri?action=dia&target=lg" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-lg-dia" value="http://__HOST__/api/siri?action=dia&target=lg" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-lg-dia')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -167,7 +213,7 @@
             <span class="text-lg">⚡</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, enciende la Xiaomi"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, enciende la Xiaomi"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
               </div>
               <div class="text-[10px] text-orange-300">Restaura brillo y despierta por ADB</div>
@@ -177,8 +223,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-xm-on" value="http://__HOST__/api/siri?action=encender&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-xm-on" value="http://__HOST__/api/siri?action=encender&target=xiaomi" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-xm-on')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -190,7 +236,7 @@
             <span class="text-lg">🔌</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, apaga la Xiaomi"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, apaga la Xiaomi"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
               </div>
               <div class="text-[10px] text-rose-300">Standby (brillo=0, vol=0) preservando Wi-Fi</div>
@@ -200,8 +246,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-xm-off" value="http://__HOST__/api/siri?action=apagar&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-xm-off" value="http://__HOST__/api/siri?action=apagar&target=xiaomi" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-xm-off')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -213,7 +259,7 @@
             <span class="text-lg">🌙</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, modo noche en la Xiaomi"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, modo noche en la Xiaomi"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
               </div>
               <div class="text-[10px] text-indigo-300">Xiaomi: Brillo 15/255 + temporizador 90m</div>
@@ -223,8 +269,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-xm-noche" value="http://__HOST__/api/siri?action=noche&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-xm-noche" value="http://__HOST__/api/siri?action=noche&target=xiaomi" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-xm-noche')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -236,7 +282,7 @@
             <span class="text-lg">☀️</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, modo día en la Xiaomi"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, modo día en la Xiaomi"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
               </div>
               <div class="text-[10px] text-amber-300">Xiaomi: Brillo 255/255</div>
@@ -246,8 +292,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-xm-dia" value="http://__HOST__/api/siri?action=dia&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-xm-dia" value="http://__HOST__/api/siri?action=dia&target=xiaomi" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-xm-dia')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -259,7 +305,7 @@
             <span class="text-lg">📺</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, pon SmartTube"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, pon SmartTube"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-orange-950 text-orange-300 rounded border border-orange-700/60 font-bold">Xiaomi</span>
               </div>
               <div class="text-[10px] text-red-300">Lanza SmartTube (YouTube sin anuncios)</div>
@@ -269,8 +315,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-xm-st" value="http://__HOST__/api/siri?action=reproducir&platform=smarttube&target=xiaomi" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-xm-st" value="http://__HOST__/api/siri?action=reproducir&platform=smarttube&target=xiaomi" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-xm-st')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -283,7 +329,7 @@
             <span class="text-lg">⚡</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, enciende las teles"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, enciende las teles"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-purple-950 text-purple-300 rounded border border-purple-700/60 font-bold">Ambas</span>
               </div>
               <div class="text-[10px] text-emerald-300">Despierta ambas pantallas simultáneamente</div>
@@ -293,8 +339,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-ambas-on" value="http://__HOST__/api/siri?action=encender&target=ambas" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-ambas-on" value="http://__HOST__/api/siri?action=encender&target=ambas" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-ambas-on')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -306,7 +352,7 @@
             <span class="text-lg">🔌</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, apaga las teles"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, apaga las teles"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-purple-950 text-purple-300 rounded border border-purple-700/60 font-bold">Ambas</span>
               </div>
               <div class="text-[10px] text-rose-300">Apaga la LG y pone la Xiaomi en Standby</div>
@@ -316,8 +362,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-ambas-off" value="http://__HOST__/api/siri?action=apagar&target=ambas" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-ambas-off" value="http://__HOST__/api/siri?action=apagar&target=ambas" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-ambas-off')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -329,7 +375,7 @@
             <span class="text-lg">🌙</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, modo noche en el salón"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, modo noche en el salón"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-purple-950 text-purple-300 rounded border border-purple-700/60 font-bold">Ambas</span>
               </div>
               <div class="text-[10px] text-indigo-300">Brillo al 6% y temporizador de 90m en ambas</div>
@@ -339,8 +385,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-ambas-noche" value="http://__HOST__/api/siri?action=noche&target=ambas" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-ambas-noche" value="http://__HOST__/api/siri?action=noche&target=ambas" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-ambas-noche')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>
@@ -352,7 +398,7 @@
             <span class="text-lg">ℹ️</span>
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">"Oye Siri, estado de las teles"</span>
+                <span class="text-xs font-black style="color: var(--text-main);"">"Oye Siri, estado de las teles"</span>
                 <span class="text-[9px] px-1.5 py-0.2 bg-purple-950 text-purple-300 rounded border border-purple-700/60 font-bold">Ambas</span>
               </div>
               <div class="text-[10px] text-slate-400">Verifica si están encendidas o en espera</div>
@@ -362,8 +408,8 @@
             Probar
           </button>
         </div>
-        <div class="flex items-center gap-1 bg-black/60 p-1.5 rounded-xl border border-white/5">
-          <input readonly id="url-ambas-status" value="http://__HOST__/api/siri?action=status" class="bg-transparent text-[10px] font-mono text-slate-400 flex-1 outline-none px-1">
+        <div class="flex items-center gap-1 code-container p-1.5 rounded-xl">
+          <input readonly id="url-ambas-status" value="http://__HOST__/api/siri?action=status" class="bg-transparent text-[10.5px] font-mono font-bold flex-1 outline-none px-1" style="color: var(--code-text);">
           <button onclick="copiar('url-ambas-status')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded-lg font-bold">Copiar</button>
         </div>
       </div>

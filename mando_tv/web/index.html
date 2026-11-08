@@ -683,23 +683,64 @@
     </button>
   </div>
 
-  <!-- 9. PIE DE PÁGINA: ESTADO DEL SERVICIO + CONMUTADOR DE TEMA + HUB SIRI -->
+  <!-- 9. PIE DE PÁGINA: ESTADO DEL SERVICIO + INVITADOS + TEMA + HUB SIRI -->
   <div class="flex items-center justify-between text-[10px] px-1 border-t border-[var(--divider)] pt-1 flex-shrink-0 font-mono">
     <div class="flex items-center gap-1.5 truncate">
-      <span id="statusTxt" class="font-bold truncate max-w-[130px] opacity-90">READY</span>
+      <span id="statusTxt" class="font-bold truncate max-w-[100px] opacity-90">READY</span>
     </div>
-    <div class="flex items-center gap-1.5">
+    <div class="flex items-center gap-1">
+      <!-- Botón Pasar Mando a Invitados (QR / AirDrop) -->
+      <button onclick="abrirModalInvitados()" title="Pasar mando a invitados" class="flex items-center gap-1 font-bold text-[9px] text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-800/60 active:scale-95 transition-all shadow-sm">
+        <span>📲</span> <span>INVITADOS</span>
+      </button>
       <!-- Conmutador de Tema: Auto / Claro / Oscuro -->
-      <button id="btnTema" onclick="ciclarTema()" title="Cambiar tema de apariencia" class="theme-toggle-btn px-2 py-0.5 rounded-lg text-[9.5px] flex items-center gap-1 active:scale-95 transition-all">
+      <button id="btnTema" onclick="ciclarTema()" title="Cambiar tema de apariencia" class="theme-toggle-btn px-1.5 py-0.5 rounded-lg text-[9px] flex items-center gap-1 active:scale-95 transition-all shadow-sm">
         🌓 <span>AUTO</span>
       </button>
       <!-- Enlace a Hub Siri -->
-      <a href="/siri" class="flex items-center gap-1 font-bold text-sky-700 dark:text-sky-300 bg-sky-100 dark:bg-sky-950/60 px-2 py-0.5 rounded-lg border border-sky-300 dark:border-sky-800/60 active:scale-95 transition-all">
+      <a href="/siri" class="flex items-center gap-1 font-bold text-[9px] text-sky-700 dark:text-sky-300 bg-sky-100 dark:bg-sky-950/60 px-1.5 py-0.5 rounded-lg border border-sky-300 dark:border-sky-800/60 active:scale-95 transition-all shadow-sm">
         <span>🎙️</span> <span>SIRI</span>
       </a>
     </div>
   </div>
 
+</div>
+
+<!-- MODAL PARA PASAR EL MANDO A INVITADOS -->
+<div id="modalInvitados" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4" onclick="if(event.target===this)cerrarModalInvitados()">
+  <div class="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl max-w-xs w-full p-4 space-y-3 text-center shadow-2xl">
+    <div class="flex justify-between items-center pb-2 border-b border-[var(--divider)]">
+      <h3 class="text-xs font-black tracking-wider flex items-center gap-1.5" style="color: var(--btn-text)">
+        <span>📲</span> <span>PASAR MANDO A INVITADOS</span>
+      </h3>
+      <button onclick="cerrarModalInvitados()" class="text-slate-400 hover:text-slate-600 font-bold text-sm px-2">✕</button>
+    </div>
+
+    <!-- Código QR -->
+    <div class="p-2 bg-white rounded-xl inline-block shadow-inner mx-auto border border-slate-200">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://192.168.1.141:8899" alt="QR Mando TV" class="w-40 h-40 mx-auto rounded-lg">
+    </div>
+
+    <p class="text-[11px] font-semibold opacity-90 leading-snug" style="color: var(--btn-text-sub)">
+      1. Conéctalos a tu <strong>Wi-Fi</strong>.<br>
+      2. Que apunten con la <strong>cámara del móvil</strong>.
+    </p>
+
+    <!-- Botones de Acción Rápida -->
+    <div class="space-y-1.5 pt-1">
+      <button onclick="compartirNativo()" class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow flex items-center justify-center gap-2 transition-all">
+        <span>📤</span> <span>AirDrop / WhatsApp</span>
+      </button>
+
+      <button onclick="copiarEnlaceMando()" class="w-full py-1.5 px-3 bg-[var(--btn-bg)] border border-[var(--btn-border)] active:scale-95 font-bold text-[10.5px] rounded-xl flex items-center justify-center gap-1.5 transition-all" style="color: var(--btn-text)">
+        <span>📋</span> <span id="lblCopiarEnlace">Copiar Enlace (192.168.1.141:8899)</span>
+      </button>
+    </div>
+
+    <div class="text-[9px] font-mono opacity-70 leading-tight pt-1" style="color: var(--btn-text-sub)">
+      💡 En iPhone pueden pulsar "Compartir" → "Añadir a pantalla de inicio" para guardarlo como app propia.
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1112,6 +1153,46 @@
   function actualizarStatus(txt) {
     const el = document.getElementById('statusTxt');
     if (el) el.textContent = txt.toUpperCase();
+  }
+
+  /* MODAL INVITADOS & COMPARTIR */
+  function abrirModalInvitados() {
+    vibrar();
+    const m = document.getElementById('modalInvitados');
+    if (m) m.classList.remove('hidden');
+  }
+
+  function cerrarModalInvitados() {
+    const m = document.getElementById('modalInvitados');
+    if (m) m.classList.add('hidden');
+  }
+
+  async function compartirNativo() {
+    vibrar();
+    const shareUrl = window.location.origin || 'http://192.168.1.141:8899';
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Mando Universal TV',
+          text: 'Mando de la tele (conéctate primero al Wi-Fi de casa)',
+          url: shareUrl
+        });
+      } catch(e) {}
+    } else {
+      copiarEnlaceMando();
+    }
+  }
+
+  function copiarEnlaceMando() {
+    vibrar();
+    const shareUrl = window.location.origin || 'http://192.168.1.141:8899';
+    navigator.clipboard.writeText(shareUrl);
+    const lbl = document.getElementById('lblCopiarEnlace');
+    if (lbl) {
+      const orig = lbl.textContent;
+      lbl.textContent = '¡Copiado al portapapeles!';
+      setTimeout(() => lbl.textContent = orig, 2500);
+    }
   }
 </script>
 </body>

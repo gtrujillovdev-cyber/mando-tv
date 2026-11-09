@@ -408,19 +408,23 @@
       font-weight: 900;
     }
 
-    /* PILLS DE STREAMING */
+    /* PILLS DE STREAMING DE ALTA FIDELIDAD (PERFECTAMENTE ENCUADRADOS 2x3) */
     .plat-tab {
       background: var(--plat-inactive-bg);
-      border: 1px solid var(--plat-inactive-border);
+      border: 1.5px solid var(--plat-inactive-border);
       color: var(--plat-inactive-text);
       font-weight: 800;
-      transition: all 0.1s ease;
+      transition: transform 0.05s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      touch-action: manipulation;
     }
-    .plat-tab.active-p {
-      background: #2563eb !important;
-      color: #ffffff !important;
-      border-color: #60a5fa !important;
-      box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+    .plat-tab:active {
+      transform: scale(0.95);
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5) !important;
+    }
+    .plat-tab.plat-pulse {
+      border-color: #2563eb !important;
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.7) !important;
     }
 
     /* INPUT DE BÚSQUEDA */
@@ -472,19 +476,19 @@
       <span>⚡</span> <span>ON</span>
     </button>
 
-    <div class="flex-1 flex retro-selector-bar p-0.5 gap-0.5 h-8 items-center overflow-hidden">
-      <button onclick="setDispositivo('xiaomi')" id="tab-xiaomi" class="retro-tab active flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center gap-1 whitespace-nowrap rounded-lg">
-        <span id="dot-xiaomi" class="inline-block w-2 h-2 rounded-full bg-slate-400 transition-all duration-300 flex-shrink-0"></span>
-        <span class="whitespace-nowrap">Xiaomi</span>
-        <span id="badge-xiaomi" class="text-[8px] px-1 py-0.2 rounded font-mono font-bold bg-slate-300 text-slate-800 flex-shrink-0">OFF</span>
+    <div class="flex-1 grid grid-cols-3 retro-selector-bar p-0.5 gap-1 h-8 items-center overflow-hidden">
+      <button onclick="setDispositivo('xiaomi')" id="tab-xiaomi" class="retro-tab active flex items-center justify-center gap-1 h-full px-1 text-[10.5px] font-black rounded-lg transition-all" style="white-space: nowrap;">
+        <span id="dot-xiaomi" class="inline-block w-2 h-2 rounded-full bg-slate-400 flex-shrink-0"></span>
+        <span class="truncate">Xiaomi</span>
+        <span id="badge-xiaomi" class="text-[7.5px] px-1 py-0.5 rounded font-mono font-black bg-slate-300 text-slate-800 flex-shrink-0 leading-none">OFF</span>
       </button>
-      <button onclick="setDispositivo('lg')" id="tab-lg" class="retro-tab flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center gap-1 whitespace-nowrap rounded-lg">
-        <span id="dot-lg" class="inline-block w-2 h-2 rounded-full bg-slate-400 transition-all duration-300 flex-shrink-0"></span>
-        <span class="whitespace-nowrap font-black">LG 65"</span>
-        <span id="badge-lg" class="text-[8px] px-1 py-0.2 rounded font-mono font-bold bg-slate-300 text-slate-800 flex-shrink-0">OFF</span>
+      <button onclick="setDispositivo('lg')" id="tab-lg" class="retro-tab flex items-center justify-center gap-1 h-full px-1 text-[10.5px] font-black rounded-lg transition-all" style="white-space: nowrap;">
+        <span id="dot-lg" class="inline-block w-2 h-2 rounded-full bg-slate-400 flex-shrink-0"></span>
+        <span class="truncate">LG 65"</span>
+        <span id="badge-lg" class="text-[7.5px] px-1 py-0.5 rounded font-mono font-black bg-slate-300 text-slate-800 flex-shrink-0 leading-none">OFF</span>
       </button>
-      <button onclick="setDispositivo('ambas')" id="tab-ambas" class="retro-tab flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center whitespace-nowrap rounded-lg">
-        <span class="whitespace-nowrap">Ambas</span>
+      <button onclick="setDispositivo('ambas')" id="tab-ambas" class="retro-tab flex items-center justify-center gap-1 h-full px-1 text-[10.5px] font-black rounded-lg transition-all" style="white-space: nowrap;">
+        <span class="truncate">Ambas</span>
       </button>
     </div>
 
@@ -496,22 +500,22 @@
   <!-- 3. SELECTOR DE FUENTES STREAMING (ACCESO DIRECTO TÁCTIL 2x3) & BARRA DE COMANDO -->
   <div class="w-full flex-shrink-0 space-y-1">
     <div class="grid grid-cols-3 gap-1.5 w-full">
-      <button type="button" onclick="lanzarPlataforma('smarttube')" id="plat-smarttube" class="plat-tab active-p py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+      <button type="button" onclick="lanzarPlataforma('smarttube')" id="plat-smarttube" class="plat-tab py-1.5 px-1 rounded-xl text-[10.5px] font-black flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
         <span class="text-xs">📺</span> <span id="lblTube">SmartTube</span>
       </button>
-      <button type="button" onclick="lanzarPlataforma('netflix')" id="plat-netflix" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+      <button type="button" onclick="lanzarPlataforma('netflix')" id="plat-netflix" class="plat-tab py-1.5 px-1 rounded-xl text-[10.5px] font-black flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
         <span class="text-xs">🍿</span> <span>Netflix</span>
       </button>
-      <button type="button" onclick="lanzarPlataforma('prime')" id="plat-prime" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+      <button type="button" onclick="lanzarPlataforma('prime')" id="plat-prime" class="plat-tab py-1.5 px-1 rounded-xl text-[10.5px] font-black flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
         <span class="text-xs">📦</span> <span>Prime</span>
       </button>
-      <button type="button" onclick="lanzarPlataforma('disney')" id="plat-disney" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+      <button type="button" onclick="lanzarPlataforma('disney')" id="plat-disney" class="plat-tab py-1.5 px-1 rounded-xl text-[10.5px] font-black flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
         <span class="text-xs">✨</span> <span>Disney+</span>
       </button>
-      <button type="button" onclick="lanzarPlataforma('movistar')" id="plat-movistar" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+      <button type="button" onclick="lanzarPlataforma('movistar')" id="plat-movistar" class="plat-tab py-1.5 px-1 rounded-xl text-[10.5px] font-black flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
         <span class="text-xs">🔵</span> <span>Movistar+</span>
       </button>
-      <button type="button" onclick="lanzarPlataforma('dazn')" id="plat-dazn" class="plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
+      <button type="button" onclick="lanzarPlataforma('dazn')" id="plat-dazn" class="plat-tab py-1.5 px-1 rounded-xl text-[10.5px] font-black flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all">
         <span class="text-xs">⚽</span> <span>DAZN</span>
       </button>
     </div>
@@ -718,7 +722,7 @@
 
     <!-- Código QR -->
     <div class="p-2 bg-white rounded-xl inline-block shadow-inner mx-auto border border-slate-200">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://192.168.1.141:8899" alt="QR Mando TV" class="w-40 h-40 mx-auto rounded-lg">
+      <img id="qrInvitadosImg" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=http://192.168.1.193:8899" alt="QR Mando TV" class="w-40 h-40 mx-auto rounded-lg">
     </div>
 
     <p class="text-[11px] font-semibold opacity-90 leading-snug" style="color: var(--btn-text-sub)">
@@ -733,7 +737,7 @@
       </button>
 
       <button onclick="copiarEnlaceMando()" class="w-full py-1.5 px-3 bg-[var(--btn-bg)] border border-[var(--btn-border)] active:scale-95 font-bold text-[10.5px] rounded-xl flex items-center justify-center gap-1.5 transition-all" style="color: var(--btn-text)">
-        <span>📋</span> <span id="lblCopiarEnlace">Copiar Enlace (192.168.1.141:8899)</span>
+        <span>📋</span> <span id="lblCopiarEnlace">Copiar Enlace (192.168.1.193:8899)</span>
       </button>
     </div>
 
@@ -863,9 +867,9 @@
       const el = document.getElementById('tab-' + t);
       if (!el) return;
       if (t === target) {
-        el.className = 'retro-tab active flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center gap-1 whitespace-nowrap rounded-lg';
+        el.className = 'retro-tab active flex items-center justify-center gap-1 h-full px-1 text-[10.5px] font-black rounded-lg transition-all';
       } else {
-        el.className = 'retro-tab flex-1 h-full text-[10.5px] font-extrabold flex items-center justify-center gap-1 whitespace-nowrap rounded-lg';
+        el.className = 'retro-tab flex items-center justify-center gap-1 h-full px-1 text-[10.5px] font-black rounded-lg transition-all';
       }
     });
 
@@ -887,6 +891,14 @@
   async function lanzarPlataforma(plat) {
     vibrar();
     plataformaActual = plat;
+
+    // Feedback táctil visual (pulso momentáneo)
+    const btn = document.getElementById('plat-' + plat);
+    if (btn) {
+      btn.classList.add('plat-pulse');
+      setTimeout(() => btn.classList.remove('plat-pulse'), 500);
+    }
+
     actualizarVisualPlataformas();
 
     const platEfectiva = (plat === 'smarttube' && dispositivoActual === 'lg') ? 'youtube' : plat;
@@ -921,11 +933,7 @@
     plats.forEach(p => {
       const btn = document.getElementById('plat-' + p);
       if (btn) {
-        if (p === plataformaActual) {
-          btn.className = 'plat-tab active-p py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all';
-        } else {
-          btn.className = 'plat-tab py-1 px-1 rounded-xl text-[10.5px] font-extrabold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all';
-        }
+        btn.className = 'plat-tab py-1.5 px-1 rounded-xl text-[10.5px] font-black flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all';
       }
     });
     const inp = document.getElementById('inputBusqueda');
@@ -1158,6 +1166,11 @@
   /* MODAL INVITADOS & COMPARTIR */
   function abrirModalInvitados() {
     vibrar();
+    const url = window.location.origin || 'http://192.168.1.193:8899';
+    const qrImg = document.getElementById('qrInvitadosImg');
+    if (qrImg) qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(url);
+    const lbl = document.getElementById('lblCopiarEnlace');
+    if (lbl) lbl.textContent = 'Copiar Enlace (' + (window.location.host || '192.168.1.193:8899') + ')';
     const m = document.getElementById('modalInvitados');
     if (m) m.classList.remove('hidden');
   }
@@ -1169,7 +1182,7 @@
 
   async function compartirNativo() {
     vibrar();
-    const shareUrl = window.location.origin || 'http://192.168.1.141:8899';
+    const shareUrl = window.location.origin || 'http://192.168.1.193:8899';
     if (navigator.share) {
       try {
         await navigator.share({
@@ -1185,7 +1198,7 @@
 
   function copiarEnlaceMando() {
     vibrar();
-    const shareUrl = window.location.origin || 'http://192.168.1.141:8899';
+    const shareUrl = window.location.origin || 'http://192.168.1.193:8899';
     navigator.clipboard.writeText(shareUrl);
     const lbl = document.getElementById('lblCopiarEnlace');
     if (lbl) {

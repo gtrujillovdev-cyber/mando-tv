@@ -962,6 +962,9 @@
     }
   }
 
+  let _syncTimeout = null;
+  let _syncEnCurso = false;
+
   async function enviarAccion(cmd, val = '0') {
     vibrar();
     try {
@@ -979,7 +982,8 @@
       } else if (data.mensaje) {
         actualizarStatus(data.mensaje);
       }
-      setTimeout(sincronizarEstadoServidor, 600);
+      clearTimeout(_syncTimeout);
+      _syncTimeout = setTimeout(sincronizarEstadoServidor, 800);
     } catch(e) {
       actualizarStatus('ERR TRANSMISIÓN');
     }
@@ -1039,6 +1043,8 @@
   }
 
   async function sincronizarEstadoServidor() {
+    if (_syncEnCurso) return;
+    _syncEnCurso = true;
     try {
       const res = await fetch('/api/status');
       const data = await res.json();
@@ -1051,9 +1057,9 @@
       const minRest = secRest > 0 ? Math.max(1, Math.round(secRest / 60)) : 0;
       timerActualMinutos = minRest;
 
-      const estiloDot = (st) => 'inline-block w-2.5 h-2.5 rounded-full transition-all duration-300 ' +
+      const estiloDot = (st) => 'inline-block w-2 h-2 rounded-full flex-shrink-0 transition-all duration-300 ' +
         (st === 'on' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : st === 'booting' ? 'bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]' : 'bg-slate-400');
-      const estiloBadge = (st) => 'text-[8.5px] px-1 py-0.2 rounded font-mono font-bold ' +
+      const estiloBadge = (st) => 'text-[7.5px] px-1 py-0.5 rounded font-mono font-black flex-shrink-0 leading-none ' +
         (st === 'on' ? 'bg-emerald-600 text-white shadow-sm' : st === 'booting' ? 'bg-amber-500 text-black animate-pulse' : 'bg-slate-300 text-slate-800');
       const textoBadge = (st) => (st === 'on' ? 'ON' : st === 'booting' ? 'INIC' : 'OFF');
 
@@ -1131,7 +1137,9 @@
           lcdTimer.className = 'cursor-pointer font-bold opacity-80';
         }
       }
-    } catch(e) {}
+    } catch(e) {} finally {
+      _syncEnCurso = false;
+    }
   }
 
   const NOCHE_CICLOS = [30, 60, 90, 120, 180];

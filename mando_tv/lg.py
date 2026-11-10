@@ -287,12 +287,11 @@ async def _ejecutar(accion: str, p: Dict):
 
 async def _leer_info_actual() -> Dict[str, Any]:
     s = _sesion
-    await s.conectar()
     vol = 0
     backlight = 0
     sound_out = "tv_speaker"
     try:
-        r_vol = await s.req("ssap://audio/getVolume")
+        r_vol = await s.req("ssap://audio/getVolume", timeout=1.2)
         payload = r_vol.get("payload", {})
         vs = payload.get("volumeStatus", {})
         vol = vs.get("volume", payload.get("volume", 0))
@@ -300,7 +299,7 @@ async def _leer_info_actual() -> Dict[str, Any]:
     except Exception:
         pass
     try:
-        r_pic = await s.req("ssap://settings/getSystemSettings", {"category": "picture", "keys": ["backlight", "brightness"]})
+        r_pic = await s.req("ssap://settings/getSystemSettings", {"category": "picture", "keys": ["backlight", "brightness"]}, timeout=1.2)
         settings = r_pic.get("payload", {}).get("settings", {})
         backlight = int(settings.get("backlight", settings.get("brightness", 0)))
     except Exception:
@@ -309,10 +308,10 @@ async def _leer_info_actual() -> Dict[str, Any]:
 
 
 def obtener_info_lg() -> Dict[str, Any]:
-    """Obtiene volumen, retroiluminación y salida de audio actuales de la LG en <100ms."""
+    """Obtiene volumen, retroiluminación y salida de audio actuales de la LG reutilizando el WebSocket."""
     try:
-        fut = asyncio.run_coroutine_threadsafe(_leer_info_actual(), _loop())
-        return fut.result(timeout=1.5)
+        fut = asyncio.run_coroutine_threadsafe(_con_reintento(_leer_info_actual), _loop())
+        return fut.result(timeout=2.0)
     except Exception:
         return {"volume": 0, "backlight": 0, "soundOutput": "tv_speaker"}
 

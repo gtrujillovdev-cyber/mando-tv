@@ -3,7 +3,6 @@ import json
 import os
 import socket
 import subprocess
-import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -11,12 +10,25 @@ from typing import Dict, List, Optional
 from . import config
 
 
-_ip_lg_actual: str = config.IP_LG
+def _cargar_ip_lg_inicial() -> str:
+    try:
+        if os.path.exists(config.LG_CONFIG_PATH):
+            with open(config.LG_CONFIG_PATH, "r", encoding="utf-8") as f:
+                ip = json.load(f).get("ip")
+                if ip:
+                    return ip
+    except Exception:
+        pass
+    return config.IP_LG
+
+
+_ip_lg_actual: str = _cargar_ip_lg_inicial()
 _ip_xiaomi_actual: str = config.IP_XIAOMI
 _ts_lg_ok: float = 0.0
 _ts_xm_ok: float = 0.0
+_ts_scan_lg: float = 0.0
+_ts_scan_xm: float = 0.0
 _lock = threading.Lock()
-_ultimo_escaneo: float = 0.0
 
 
 def _normalizar_mac(mac_str: str) -> str:
@@ -30,8 +42,8 @@ def _normalizar_mac(mac_str: str) -> str:
     return mac_str.strip().lower()
 
 
-def puerto_abierto(ip: str, puerto: int, timeout: float = 0.3) -> bool:
-    """Verifica de forma no bloqueante si un puerto TCP está abierto."""
+def puerto_abierto(ip: str, puerto: int, timeout: float = 0.2) -> bool:
+    """Verifica de forma rápida si un puerto TCP está abierto."""
     if not ip:
         return False
     try:
@@ -76,8 +88,8 @@ def obtener_ips_arp_por_mac(mac_objetivo: str) -> List[str]:
     return ips
 
 
-def escanear_subred(puerto: int, subred_base: str = "192.168.1.", timeout: float = 0.25) -> List[str]:
-    """Escanea la subred completa /24 en paralelo (<1.5s) buscando un puerto específico."""
+def escanear_subred(puerto: int, subred_base: str = "192.168.1.", timeout: float = 0.15) -> List[str]:
+    """Escanea la subred completa /24 en paralelo buscando un puerto específico."""
     ips_a_probar = [f"{subred_base}{i}" for i in range(1, 255)]
     abiertas: List[str] = []
 
@@ -86,7 +98,7 @@ def escanear_subred(puerto: int, subred_base: str = "192.168.1.", timeout: float
             return ip
         return None
 
-    with ThreadPoolExecutor(max_workers=50) as pool:
+    with ThreadPoolExecutor(max_workers=64) as pool:
         for resultado in pool.map(_probar, ips_a_probar):
             if resultado:
                 abiertas.append(resultado)
@@ -94,65 +106,80 @@ def escanear_subred(puerto: int, subred_base: str = "192.168.1.", timeout: float
     return abiertas
 
 
+def _scan_bg_lg():
+    subred_ips = escanear_subred(3000)
+    if subred_ips:
+        with _lock:
+            _actualizar_ip_lg(subred_ips[0])
+
+
+def _scan_bg_xm():
+    subred_ips = escanear_subred(5555)
+    if subred_ips:
+        with _lock:
+            _actualizar_ip_xiaomi(subred_ips[0])
+
+
 def resolver_ip_lg(forzar: bool = False) -> str:
-    """Resuelve la IP viva de la televisión LG 65\"."""
-    global _ultimo_escaneo, _ts_lg_ok
+    """Resuelve la IP viva de la televisión LG 65\" sin bloquear el servidor."""
+    global _ts_lg_ok, _ts_scan_lg
     ahora = time.time()
     with _lock:
-        # Caching ultrarrápido: si fue verificada hace menos de 20s y no se fuerza, retornar de inmediato
         if not forzar and (ahora - _ts_lg_ok < 20.0):
             return _ip_lg_actual
 
-        # 1. Si la IP actual responde en puerto 3000, mantenerla
-        if not forzar and puerto_abierto(_ip_lg_actual, 3000, timeout=0.2):
+        if not forzar and puerto_abierto(_ip_lg_actual, 3000, timeout=0.15):
             _ts_lg_ok = ahora
             return _ip_lg_actual
 
-        # 2. Buscar en la tabla ARP por la MAC normalizada de la LG
         ips_arp = obtener_ips_arp_por_mac(config.MAC_LG)
         for ip in ips_arp:
-            if puerto_abierto(ip, 3000, timeout=0.25):
+            if puerto_abierto(ip, 3000, timeout=0.15):
                 _actualizar_ip_lg(ip)
                 _ts_lg_ok = ahora
                 return ip
 
-        # 3. Si no responde y hace más de 10s desde el último escaneo, barrido de subred
-        if ahora - _ultimo_escaneo > 10:
-            _ultimo_escaneo = ahora
+        if forzar:
             subred_ips = escanear_subred(3000)
             if subred_ips:
-                for ip in subred_ips:
-                    _actualizar_ip_lg(ip)
-                    _ts_lg_ok = ahora
-                    return ip
+                _actualizar_ip_lg(subred_ips[0])
+                _ts_lg_ok = ahora
+                return subred_ips[0]
+        elif ahora - _ts_scan_lg > 60.0:
+            _ts_scan_lg = ahora
+            threading.Thread(target=_scan_bg_lg, daemon=True).start()
 
         return _ip_lg_actual
 
 
 def resolver_ip_xiaomi(forzar: bool = False) -> str:
-    """Resuelve la IP viva de la televisión Xiaomi."""
-    global _ts_xm_ok
+    """Resuelve la IP viva de la televisión Xiaomi sin bloquear el servidor."""
+    global _ts_xm_ok, _ts_scan_xm
     ahora = time.time()
     with _lock:
         if not forzar and (ahora - _ts_xm_ok < 20.0):
             return _ip_xiaomi_actual
 
-        if not forzar and puerto_abierto(_ip_xiaomi_actual, 5555, timeout=0.2):
+        if not forzar and puerto_abierto(_ip_xiaomi_actual, 5555, timeout=0.15):
             _ts_xm_ok = ahora
             return _ip_xiaomi_actual
 
         ips_arp = obtener_ips_arp_por_mac(config.MAC_XIAOMI)
         for ip in ips_arp:
-            if puerto_abierto(ip, 5555, timeout=0.25):
+            if puerto_abierto(ip, 5555, timeout=0.15):
                 _actualizar_ip_xiaomi(ip)
                 _ts_xm_ok = ahora
                 return ip
 
-        subred_ips = escanear_subred(5555)
-        if subred_ips:
-            _actualizar_ip_xiaomi(subred_ips[0])
-            _ts_xm_ok = ahora
-            return subred_ips[0]
+        if forzar:
+            subred_ips = escanear_subred(5555)
+            if subred_ips:
+                _actualizar_ip_xiaomi(subred_ips[0])
+                _ts_xm_ok = ahora
+                return subred_ips[0]
+        elif ahora - _ts_scan_xm > 60.0:
+            _ts_scan_xm = ahora
+            threading.Thread(target=_scan_bg_xm, daemon=True).start()
 
         return _ip_xiaomi_actual
 
@@ -164,7 +191,6 @@ def _actualizar_ip_lg(nueva_ip: str):
         print(f"📡 [DISCOVERY] LG TV detectada en nueva IP: {nueva_ip} (anterior: {_ip_lg_actual})")
         _ip_lg_actual = nueva_ip
         config.IP_LG = nueva_ip
-        # Actualizar archivo config.json si existe
         try:
             ruta = config.LG_CONFIG_PATH
             if os.path.exists(ruta):

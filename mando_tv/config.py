@@ -3,8 +3,8 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-IP_LG = os.environ.get("LG_TV_IP", "192.168.1.250")
-IP_XIAOMI = os.environ.get("XIAOMI_TV_IP", "192.168.1.238")
+IP_LG = os.environ.get("LG_TV_IP", "192.168.1.133")
+IP_XIAOMI = os.environ.get("XIAOMI_TV_IP", "192.168.1.134")
 MAC_LG = os.environ.get("LG_TV_MAC", "74:e6:b8:26:02:0e")
 MAC_XIAOMI = os.environ.get("XIAOMI_TV_MAC", "50:e4:78:af:b2:e7")
 PUERTO = int(os.environ.get("MANDO_PORT", "8899"))

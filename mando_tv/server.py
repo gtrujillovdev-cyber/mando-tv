@@ -46,6 +46,7 @@ class MandoHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        global _cache_status, _cache_status_ts
         url = urllib.parse.urlparse(self.path)
 
         try:
@@ -59,7 +60,6 @@ class MandoHandler(BaseHTTPRequestHandler):
                 self.wfile.write(_leer_web("siri.html").replace(b"__HOST__", host.encode()))
 
             elif url.path == "/api/status":
-                global _cache_status, _cache_status_ts
                 ahora = time.time()
                 if ahora - _cache_status_ts < 2.0 and _cache_status:
                     self._enviar_encabezados("application/json")

@@ -13,8 +13,21 @@ from . import config
 
 _ip_lg_actual: str = config.IP_LG
 _ip_xiaomi_actual: str = config.IP_XIAOMI
+_ts_lg_ok: float = 0.0
+_ts_xm_ok: float = 0.0
 _lock = threading.Lock()
 _ultimo_escaneo: float = 0.0
+
+
+def _normalizar_mac(mac_str: str) -> str:
+    """Normaliza cualquier formato MAC (con o sin ceros a la izquierda) a xx:xx:xx:xx:xx:xx."""
+    try:
+        partes = mac_str.strip().lower().replace("-", ":").split(":")
+        if len(partes) == 6:
+            return ":".join(f"{int(p, 16):02x}" for p in partes)
+    except Exception:
+        pass
+    return mac_str.strip().lower()
 
 
 def puerto_abierto(ip: str, puerto: int, timeout: float = 0.3) -> bool:
@@ -31,7 +44,7 @@ def puerto_abierto(ip: str, puerto: int, timeout: float = 0.3) -> bool:
 
 def obtener_ips_arp_por_mac(mac_objetivo: str) -> List[str]:
     """Obtiene todas las IPs asociadas a una MAC en la tabla ARP del sistema."""
-    mac_clean = mac_objetivo.lower().replace("-", ":")
+    mac_norm = _normalizar_mac(mac_objetivo)
     ips: List[str] = []
 
     # 1. En Linux (/proc/net/arp)
@@ -40,21 +53,23 @@ def obtener_ips_arp_por_mac(mac_objetivo: str) -> List[str]:
             with open("/proc/net/arp", "r") as f:
                 for line in f:
                     parts = line.split()
-                    if len(parts) >= 4 and parts[3].lower() == mac_clean:
+                    if len(parts) >= 4 and _normalizar_mac(parts[3]) == mac_norm:
                         ips.append(parts[0])
-            return ips
+            if ips:
+                return ips
         except Exception:
             pass
 
-    # 2. En macOS / BSD (comando arp -an)
+    # 2. En macOS / BSD (comando arp -an, que trunca ceros ej: 74:e6:b8:26:2:e)
     try:
         salida = subprocess.check_output(["arp", "-an"], text=True, stderr=subprocess.DEVNULL)
         for linea in salida.splitlines():
             partes = linea.split()
-            # Formato típico: ? (192.168.1.250) at 74:e6:b8:26:2:e on en0 ...
-            if len(partes) >= 4 and mac_clean in partes[3].lower():
-                ip_raw = partes[1].strip("()")
-                ips.append(ip_raw)
+            if len(partes) >= 4:
+                mac_candidata = _normalizar_mac(partes[3])
+                if mac_candidata == mac_norm:
+                    ip_raw = partes[1].strip("()")
+                    ips.append(ip_raw)
     except Exception:
         pass
 
@@ -81,28 +96,34 @@ def escanear_subred(puerto: int, subred_base: str = "192.168.1.", timeout: float
 
 def resolver_ip_lg(forzar: bool = False) -> str:
     """Resuelve la IP viva de la televisión LG 65\"."""
-    global _ultimo_escaneo
+    global _ultimo_escaneo, _ts_lg_ok
+    ahora = time.time()
     with _lock:
-        # 1. Si la IP actual responde en puerto 3000, mantenerla
-        if not forzar and puerto_abierto(_ip_lg_actual, 3000, timeout=0.25):
+        # Caching ultrarrápido: si fue verificada hace menos de 20s y no se fuerza, retornar de inmediato
+        if not forzar and (ahora - _ts_lg_ok < 20.0):
             return _ip_lg_actual
 
-        # 2. Buscar en la tabla ARP por la MAC fija de la LG
+        # 1. Si la IP actual responde en puerto 3000, mantenerla
+        if not forzar and puerto_abierto(_ip_lg_actual, 3000, timeout=0.2):
+            _ts_lg_ok = ahora
+            return _ip_lg_actual
+
+        # 2. Buscar en la tabla ARP por la MAC normalizada de la LG
         ips_arp = obtener_ips_arp_por_mac(config.MAC_LG)
         for ip in ips_arp:
-            if puerto_abierto(ip, 3000, timeout=0.3):
+            if puerto_abierto(ip, 3000, timeout=0.25):
                 _actualizar_ip_lg(ip)
+                _ts_lg_ok = ahora
                 return ip
 
         # 3. Si no responde y hace más de 10s desde el último escaneo, barrido de subred
-        ahora = time.time()
         if ahora - _ultimo_escaneo > 10:
             _ultimo_escaneo = ahora
             subred_ips = escanear_subred(3000)
             if subred_ips:
-                # Comprobar cuál coincide con la MAC de LG si hay varias
                 for ip in subred_ips:
                     _actualizar_ip_lg(ip)
+                    _ts_lg_ok = ahora
                     return ip
 
         return _ip_lg_actual
@@ -110,19 +131,27 @@ def resolver_ip_lg(forzar: bool = False) -> str:
 
 def resolver_ip_xiaomi(forzar: bool = False) -> str:
     """Resuelve la IP viva de la televisión Xiaomi."""
+    global _ts_xm_ok
+    ahora = time.time()
     with _lock:
-        if not forzar and puerto_abierto(_ip_xiaomi_actual, 5555, timeout=0.25):
+        if not forzar and (ahora - _ts_xm_ok < 20.0):
+            return _ip_xiaomi_actual
+
+        if not forzar and puerto_abierto(_ip_xiaomi_actual, 5555, timeout=0.2):
+            _ts_xm_ok = ahora
             return _ip_xiaomi_actual
 
         ips_arp = obtener_ips_arp_por_mac(config.MAC_XIAOMI)
         for ip in ips_arp:
-            if puerto_abierto(ip, 5555, timeout=0.3):
+            if puerto_abierto(ip, 5555, timeout=0.25):
                 _actualizar_ip_xiaomi(ip)
+                _ts_xm_ok = ahora
                 return ip
 
         subred_ips = escanear_subred(5555)
         if subred_ips:
             _actualizar_ip_xiaomi(subred_ips[0])
+            _ts_xm_ok = ahora
             return subred_ips[0]
 
         return _ip_xiaomi_actual

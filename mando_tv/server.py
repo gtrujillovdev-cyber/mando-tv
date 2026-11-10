@@ -19,6 +19,10 @@ from .streaming import reproducir_streaming
 from .xiaomi import encender_xiaomi
 
 
+_cache_status: bytes = b""
+_cache_status_ts: float = 0.0
+
+
 def _leer_web(nombre: str) -> bytes:
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", nombre), "rb") as f:
         return f.read()
@@ -55,10 +59,17 @@ class MandoHandler(BaseHTTPRequestHandler):
                 self.wfile.write(_leer_web("siri.html").replace(b"__HOST__", host.encode()))
 
             elif url.path == "/api/status":
+                global _cache_status, _cache_status_ts
+                ahora = time.time()
+                if ahora - _cache_status_ts < 2.0 and _cache_status:
+                    self._enviar_encabezados("application/json")
+                    self.wfile.write(_cache_status)
+                    return
+
                 lg_ip = discovery.resolver_ip_lg()
                 xm_ip = discovery.resolver_ip_xiaomi()
                 lg_st = lg.estado_lg()
-                xm_on = discovery.puerto_abierto(xm_ip, 5555)
+                xm_on = discovery.puerto_abierto(xm_ip, 5555, timeout=0.2)
                 lg_info = lg.obtener_info_lg() if lg_st == "on" else {"volume": 0, "backlight": 0, "soundOutput": "tv_speaker"}
                 xm_info = xiaomi.obtener_info_xiaomi() if xm_on else {"volume": 0, "backlight": 0}
                 data = {
@@ -76,8 +87,10 @@ class MandoHandler(BaseHTTPRequestHandler):
                     "timer_lg": timers.obtener_tiempo_restante_timer("lg"),
                     "timer_xiaomi": timers.obtener_tiempo_restante_timer("xiaomi")
                 }
+                _cache_status = json.dumps(data).encode("utf-8")
+                _cache_status_ts = ahora
                 self._enviar_encabezados("application/json")
-                self.wfile.write(json.dumps(data).encode("utf-8"))
+                self.wfile.write(_cache_status)
 
             elif url.path == "/api/action":
                 qs = urllib.parse.parse_qs(url.query)
@@ -85,7 +98,7 @@ class MandoHandler(BaseHTTPRequestHandler):
                 target = qs.get("target", ["xiaomi"])[0]
                 val = qs.get("val", ["0"])[0]
 
-                # Respuesta HTTP instantánea (<10ms para el móvil)
+                # Respuesta HTTP instantánea (<1ms para feedback táctil en iPhone)
                 labels = {
                     "vol_up": "Volumen +", "vol_down": "Volumen -", "mute": "Mute",
                     "ch_up": "Canal +", "ch_down": "Canal -",
@@ -101,25 +114,13 @@ class MandoHandler(BaseHTTPRequestHandler):
                 }
                 mensaje = labels.get(cmd, f"{cmd.upper()}")
 
-                # Si la tele destino no está encendida, avisar en vez de fingir éxito.
-                if cmd not in ("encender", "cancelar_timer"):
-                    estados = []
-                    if target in ("lg", "ambas"):
-                        estados.append(("LG 65\"", lg.estado_lg()))
-                    if target in ("xiaomi", "ambas"):
-                        xm_ip = discovery.resolver_ip_xiaomi()
-                        estados.append(("Xiaomi", "on" if discovery.puerto_abierto(xm_ip, 5555) else "standby"))
-                    if estados and not any(st == "on" for _, st in estados):
-                        nombre, st = estados[0]
-                        msg = f"{nombre} INICIANDO..." if st == "booting" else f"{nombre} EN ESPERA · PULSA '⚡ ON'"
-                        self._enviar_encabezados("application/json")
-                        self.wfile.write(json.dumps({"ok": False, "mensaje": msg}).encode("utf-8"))
-                        return
-
                 self._enviar_encabezados("application/json")
                 self.wfile.write(json.dumps({"ok": True, "mensaje": mensaje}).encode("utf-8"))
 
-                # Ejecución en segundo plano sin bloquear el navegador
+                # Invalida caché de estado para refresco rápido
+                _cache_status_ts = 0.0
+
+                # Ejecución en segundo plano sin bloquear jamás el navegador
                 threading.Thread(target=self.ejecutar_comando, args=(cmd, target, val), daemon=True).start()
 
             elif url.path == "/api/voice":
@@ -412,11 +413,11 @@ class MandoHandler(BaseHTTPRequestHandler):
         # 6. ROCKER DE VOLUMEN & CANALES (CH)
         elif cmd == "vol_up":
             if target in ["lg", "ambas"]: lg.run_lg("vol_up", {})
-            if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 24")
+            if target in ["xiaomi", "ambas"]: xiaomi.xiaomi_vol_up()
             return "Volumen +"
         elif cmd == "vol_down":
             if target in ["lg", "ambas"]: lg.run_lg("vol_down", {})
-            if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 25")
+            if target in ["xiaomi", "ambas"]: xiaomi.xiaomi_vol_down()
             return "Volumen -"
         elif cmd == "ch_up":
             if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "CHANNELUP"})
@@ -434,15 +435,15 @@ class MandoHandler(BaseHTTPRequestHandler):
         # 7. CONTROLES DE REPRODUCCIÓN (PLAYBACK)
         elif cmd == "play_pause":
             if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "PLAY"})
-            if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 85")
+            if target in ["xiaomi", "ambas"]: xiaomi.xiaomi_play_pause()
             return "Play / Pausa"
         elif cmd == "rewind":
             if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "REWIND"})
-            if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 89")
+            if target in ["xiaomi", "ambas"]: xiaomi.xiaomi_rewind()
             return "Rebobinar -10s"
         elif cmd == "fast_forward":
             if target in ["lg", "ambas"]: lg.run_lg("tecla", {"tecla": "FASTFORWARD"})
-            if target in ["xiaomi", "ambas"]: xiaomi.ejecutar_adb_xiaomi("input keyevent 90")
+            if target in ["xiaomi", "ambas"]: xiaomi.xiaomi_fast_forward()
             return "Avanzar +10s"
 
         # 8. TECLAS DE SISTEMA (HOME, ATRÁS, AJUSTES, SOURCE, INFO)

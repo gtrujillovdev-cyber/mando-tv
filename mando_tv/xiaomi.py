@@ -25,28 +25,43 @@ def encender_xiaomi() -> bool:
     return True
 
 
+_adb_conectado: bool = False
+
+
 def conectar_adb_xiaomi() -> bool:
+    global _adb_conectado
     ip = discovery.resolver_ip_xiaomi()
     cmd = f"adb connect {ip}:5555"
     res = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return res.returncode == 0
+    _adb_conectado = (res.returncode == 0)
+    return _adb_conectado
 
 
 def ejecutar_adb_xiaomi(comando_shell: str):
+    global _adb_conectado
     ip = discovery.resolver_ip_xiaomi()
-    conectar_adb_xiaomi()
-    return subprocess.run(
+    if not _adb_conectado:
+        conectar_adb_xiaomi()
+    res = subprocess.run(
         ["adb", "-s", f"{ip}:5555", "shell", comando_shell],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=6
     )
+    if res.returncode != 0 and ("device not found" in res.stderr.lower() or "offline" in res.stderr.lower()):
+        conectar_adb_xiaomi()
+        res = subprocess.run(
+            ["adb", "-s", f"{ip}:5555", "shell", comando_shell],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=6
+        )
+    return res
 
 
 def programar_temporizador_xiaomi(minutos: float = 90.0):
     """Programa el apagado en el kernel de Android TV (persiste aunque el Mac se apague)."""
     cancelar_temporizador_xiaomi(silencioso=True)
     segundos = int(minutos * 60)
+    ip = discovery.resolver_ip_xiaomi()
     conectar_adb_xiaomi()
-    cmd = f"adb -s {IP_XIAOMI}:5555 shell 'nohup sh -c \"sleep {segundos} && input keyevent 26\" </dev/null >/dev/null 2>&1 & echo $! > /data/local/tmp/tv_sleep_timer.pid'"
+    cmd = f"adb -s {ip}:5555 shell 'nohup sh -c \"sleep {segundos} && input keyevent 26\" </dev/null >/dev/null 2>&1 & echo $! > /data/local/tmp/tv_sleep_timer.pid'"
     subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         with open(TIMER_FILE_XIAOMI_META, "w") as f:
@@ -56,8 +71,9 @@ def programar_temporizador_xiaomi(minutos: float = 90.0):
 
 
 def cancelar_temporizador_xiaomi(silencioso: bool = False):
+    ip = discovery.resolver_ip_xiaomi()
     conectar_adb_xiaomi()
-    cancel_cmd = f"adb -s {IP_XIAOMI}:5555 shell 'kill -9 $(cat /data/local/tmp/tv_sleep_timer.pid 2>/dev/null) 2>/dev/null; pkill -P $(cat /data/local/tmp/tv_sleep_timer.pid 2>/dev/null) 2>/dev/null; rm -f /data/local/tmp/tv_sleep_timer.pid'"
+    cancel_cmd = f"adb -s {ip}:5555 shell 'kill -9 $(cat /data/local/tmp/tv_sleep_timer.pid 2>/dev/null) 2>/dev/null; pkill -P $(cat /data/local/tmp/tv_sleep_timer.pid 2>/dev/null) 2>/dev/null; rm -f /data/local/tmp/tv_sleep_timer.pid'"
     subprocess.run(cancel_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if os.path.exists(TIMER_FILE_XIAOMI_META):
         try:
@@ -127,10 +143,30 @@ def xiaomi_descanso():
     print(f"{Color.GREEN}[✓] Xiaomi TV: Modo Descanso Visual activado (brillo atenuado para no forzar la vista).{Color.END}\n")
 
 
+def xiaomi_vol_up():
+    ejecutar_adb_xiaomi("cmd media_session volume --show --stream 3 --adj raise")
+
+
+def xiaomi_vol_down():
+    ejecutar_adb_xiaomi("cmd media_session volume --show --stream 3 --adj lower")
+
+
+def xiaomi_play_pause():
+    ejecutar_adb_xiaomi("cmd media_session dispatch play-pause")
+
+
+def xiaomi_rewind():
+    ejecutar_adb_xiaomi("cmd media_session dispatch rewind")
+
+
+def xiaomi_fast_forward():
+    ejecutar_adb_xiaomi("cmd media_session dispatch fast-forword")
+
+
 def xiaomi_volumen(nivel: int):
     # Android TV suele manejar volumen 0 a 15
     nivel_android = max(0, min(15, int(nivel * 15 / 100))) if nivel > 15 else nivel
-    ejecutar_adb_xiaomi(f"cmd media_session volume --set {nivel_android}")
+    ejecutar_adb_xiaomi(f"cmd media_session volume --show --set {nivel_android}")
     print(f"{Color.GREEN}[✓] Xiaomi TV: Volumen ajustado a {nivel_android}/15.{Color.END}")
 
 

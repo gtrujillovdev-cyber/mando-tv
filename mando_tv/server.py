@@ -487,16 +487,22 @@ def _ip_local() -> str:
 
 def _adb_keepalive():
     """Mantiene la conexión ADB con la Xiaomi viva en segundo plano."""
+    try:
+        lg.precalentar()
+        xiaomi.conectar_adb_xiaomi()
+    except Exception:
+        pass
     while True:
         time.sleep(60)
-        xiaomi.conectar_adb_xiaomi()
+        try:
+            xiaomi.conectar_adb_xiaomi()
+        except Exception:
+            pass
 
 
 def iniciar_servidor():
-    lg.precalentar()
-    xiaomi.conectar_adb_xiaomi()
-    threading.Thread(target=_adb_keepalive, daemon=True, name="adb-keepalive").start()
     server = ThreadingHTTPServer(("0.0.0.0", PUERTO), MandoHandler)
+    threading.Thread(target=_adb_keepalive, daemon=True, name="adb-keepalive").start()
     print(f"\n{'='*70}")
     print(f" 🎛️  MANDO UNIVERSAL & HUB SIRI EN LÍNEA (iPhone 16 Calibrado)")
     print(f"{'='*70}")

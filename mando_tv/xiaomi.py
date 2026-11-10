@@ -31,9 +31,17 @@ _adb_conectado: bool = False
 def conectar_adb_xiaomi() -> bool:
     global _adb_conectado
     ip = discovery.resolver_ip_xiaomi()
-    cmd = f"adb connect {ip}:5555"
-    res = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    _adb_conectado = (res.returncode == 0)
+    if not discovery.puerto_abierto(ip, 5555, timeout=0.2):
+        _adb_conectado = False
+        return False
+    try:
+        res = subprocess.run(
+            ["adb", "connect", f"{ip}:5555"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2
+        )
+        _adb_conectado = (res.returncode == 0)
+    except Exception:
+        _adb_conectado = False
     return _adb_conectado
 
 
@@ -41,18 +49,23 @@ def ejecutar_adb_xiaomi(comando_shell: str):
     global _adb_conectado
     ip = discovery.resolver_ip_xiaomi()
     if not _adb_conectado:
-        conectar_adb_xiaomi()
-    res = subprocess.run(
-        ["adb", "-s", f"{ip}:5555", "shell", comando_shell],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=6
-    )
-    if res.returncode != 0 and ("device not found" in res.stderr.lower() or "offline" in res.stderr.lower()):
-        conectar_adb_xiaomi()
+        if not conectar_adb_xiaomi():
+            return None
+    try:
         res = subprocess.run(
             ["adb", "-s", f"{ip}:5555", "shell", comando_shell],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=6
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5
         )
-    return res
+        if res.returncode != 0 and ("device not found" in res.stderr.lower() or "offline" in res.stderr.lower()):
+            if conectar_adb_xiaomi():
+                res = subprocess.run(
+                    ["adb", "-s", f"{ip}:5555", "shell", comando_shell],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5
+                )
+        return res
+    except Exception:
+        _adb_conectado = False
+        return None
 
 
 def programar_temporizador_xiaomi(minutos: float = 90.0):
